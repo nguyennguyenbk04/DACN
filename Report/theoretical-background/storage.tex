@@ -1,0 +1,7 @@
+\section{Database and storage system}
+Quizum adopts a multi-database architecture to efficiently manage the diverse types of data involved in the platform:
+\begin{itemize}
+    \item MySQL is used to store structured relational data such as user accounts, quiz attempts, scoring records, and administrative information. MySQL’s reliability and ACID compliance make it suitable for storing sensitive and transactional data.
+    \item MongoDB handles semi-structured and unstructured information including video transcripts, generated summaries, quiz content, and metadata. Its document-based structure enables flexible schema design, which is beneficial given the variability of AI-generated content.
+    \item In this stage, we are using MinIO - an S3-compatible object storage service that stores uploaded videos, extracted audio files, and other large assets for testing purpose. This is a great storage because we plan to migrate to AWS S3 in the next stage of our project.
+\end{itemize}

@@ -1,0 +1,42 @@
+# Start infra
+cd /home/bnguyen/Desktop/DACN/infra
+docker compose up -d
+
+# Terminal 1 - Backend
+cd /home/bnguyen/Desktop/DACN/backend
+npm run dev
+
+# Terminal 2 - Worker
+cd /home/bnguyen/Desktop/DACN/backend
+npm run worker
+
+
+# Clear MySQL jobs
+docker exec -i mysql mysql -uroot -proot123 -e "TRUNCATE TABLE appdb.jobs;"
+
+# Clear MongoDB transcripts
+docker exec -i mongodb mongosh appdb --quiet --eval "db.transcripts.deleteMany({})"
+
+docker exec -i mysql mysql -uroot -proot123 -e "SELECT id, type, status, created_at, JSON_EXTRACT(result, '$.segments') as segments FROM appdb.jobs ORDER BY created_at DESC LIMIT 5;"
+docker exec -i mongodb mongosh appdb --quiet --eval "db.transcripts.find().sort({createdAt:-1}).limit(1).pretty()"
+
+# Get transcript for job ID 
+docker exec -i mongodb mongosh appdb --quiet --eval "db.transcripts.findOne({videoId: '<ID>'})"
+
+
+
+# API ENDPOINTS
+# Upload video
+curl -F "video=@<video-link>" http://localhost:4000/api/upload
+
+# List all jobs
+curl http://localhost:4000/api/jobs
+
+# Get specific job status
+curl http://localhost:4000/api/jobs/<JOB_ID>
+
+# Get transcript by video ID
+curl http://localhost:4000/api/transcripts/<JOB_ID>
+
+# Generate summary using trained Pegasus model
+curl -X POST http://localhost:4000/api/transcripts/<JOB_ID>/summarize

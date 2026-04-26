@@ -1,0 +1,24 @@
+\usepackage{longtable}
+
+\newcounter{tmp}
+\newcommand\tabularhead[1]{
+% \begin{table}[h]
+  \begin{longtable}{|p{0.3\linewidth}|p{0.55\linewidth}|}
+  \caption{Use-case #1}
+    
+    \hline
+    \textbf{Use-case} & {\textbf{#1}} \\
+    \hline}
+
+  \newcommand\addrow[2]{#1 & #2 \\ \hline}
+
+  \newcommand\addmulrow[2]{ #1 
+     &  \begin{enumerate} #2  \setcounter{tmp}{\value{enumi}}\end{enumerate}  \\ \hline}
+     
+  \newcommand\addbreakmulrow[1]{ 
+     &  \begin{enumerate}\setcounter{enumi}{\value{tmp}} #1  \end{enumerate}  \\ \hline}
+  
+ 
+  \newenvironment{usecase}{\tabularhead}
+{\end{longtable}}
+% \end{table}}

@@ -1,0 +1,13 @@
+\section{Backend}
+
+\subsection{Node.js}
+Node.js is a JavaScript runtime built on Chrome’s V8 engine, designed for building fast and scalable server-side applications. In Quizum, Node.js serves as the foundation of the backend, handling all server logic, routing, API interactions, and workflow coordination.
+
+\subsection{Express.js}
+Express.js is a lightweight and flexible web application framework for Node.js, commonly used to build RESTful APIs. Quizum uses Express.js to structure its API endpoints, manage client requests, implement authentication, and serve as the primary communication layer between the frontend and backend.
+
+\subsection{BullMQ}
+BullMQ is a modern queue management library built on top of Redis, designed for processing background jobs and distributed workloads. In Quizum, BullMQ schedules and executes long-running tasks such as audio extraction, transcription, and summarization, ensuring that intensive AI processing does not block the main application flow.
+
+\subsection{Redis}
+Redis is an in-memory data store commonly used for caching, messaging, and real-time operations. Quizum uses Redis as the message broker for BullMQ, enabling reliable job queuing, task retries, progress tracking, and smooth coordination of asynchronous workflows.

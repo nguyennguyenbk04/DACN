@@ -1,0 +1,39 @@
+# Python
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Node
+node_modules/
+npm-debug.log*
+
+# Environment files (contain credentials)
+.env
+.env.local
+.env.*.local
+
+# Model weights (too large for GitHub — store on HuggingFace Hub or Google Drive)
+pegasus-trained/content/pegasus-trained/model.safetensors
+pegasus-trained/content/pegasus-trained/training_args.bin
+
+# LaTeX build artifacts
+*.aux
+*.log
+*.out
+*.toc
+*.nav
+*.snm
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
