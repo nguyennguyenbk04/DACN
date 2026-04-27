@@ -23,7 +23,7 @@ x-backend-env: &backend-env
   GROQ_API_KEY: ${GROQ_API_KEY}
 
 services:
-  # ── Infrastructure ──────────────────────────────────────────────────────────
+  # ── Infrastructure ────────────────────────────────────────────────────────────
   mysql_dacn:
     image: mysql:8.0.35
     container_name: mysql_dacn
@@ -36,7 +36,7 @@ services:
       - "${MYSQL_PORT:-3307}:3306"
     volumes:
       - mysql_data:/var/lib/mysql
-      - ./mysql_schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - ./db/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${MYSQL_ROOT_PASSWORD:-root123}"]
       interval: 10s
@@ -85,10 +85,10 @@ services:
       start_period: 10s
     restart: unless-stopped
 
-  # ── AI service ──────────────────────────────────────────────────────────────
+  # ── AI service ────────────────────────────────────────────────────────────────
   ai_service:
     build:
-      context: ../ai_service
+      context: ./ai_service
       dockerfile: Dockerfile
     container_name: ai_service
     ports:
@@ -98,7 +98,7 @@ services:
       PEGASUS_MODEL_PATH: /app/pegasus-trained/content/pegasus-trained
       GROQ_API_KEY: ${GROQ_API_KEY}
     volumes:
-      - ../pegasus-trained:/app/pegasus-trained:ro
+      - ./pegasus-trained:/app/pegasus-trained:ro
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
@@ -107,10 +107,10 @@ services:
       start_period: 120s
     restart: unless-stopped
 
-  # ── Backend API ─────────────────────────────────────────────────────────────
+  # ── Backend API ───────────────────────────────────────────────────────────────
   backend:
     build:
-      context: ../backend
+      context: ./backend
       dockerfile: Dockerfile
     container_name: backend
     ports:
@@ -130,10 +130,10 @@ services:
         condition: service_started
     restart: unless-stopped
 
-  # ── BullMQ worker ───────────────────────────────────────────────────────────
+  # ── BullMQ worker ─────────────────────────────────────────────────────────────
   worker:
     build:
-      context: ../backend
+      context: ./backend
       dockerfile: Dockerfile
     container_name: worker
     command: node src/worker/worker.js
@@ -144,10 +144,10 @@ services:
         condition: service_started
     restart: unless-stopped
 
-  # ── Frontend ────────────────────────────────────────────────────────────────
+  # ── Frontend ──────────────────────────────────────────────────────────────────
   frontend:
     build:
-      context: ../frontend
+      context: ./frontend
       dockerfile: Dockerfile
       args:
         VITE_API_URL: http://localhost:4000/api

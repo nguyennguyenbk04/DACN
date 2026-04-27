@@ -15,6 +15,7 @@ npm-debug.log*
 .env.local
 .env.*.local
 !.env.example
+!**/.env.example
 
 # Model weights (too large for GitHub — store on HuggingFace Hub or Google Drive)
 pegasus-trained/content/pegasus-trained/model.safetensors
