@@ -36,27 +36,41 @@ async function startWorker() {
   const worker = new Worker('transcribe', async job => {
     const data = job.data || {};
     console.log('Worker processing job', job.id, data);
-    const { videoUrl, filename = `video-${Date.now()}`, userId } = data;
+    const { videoUrl, youtubeUrl, filename = `video-${Date.now()}`, userId } = data;
 
     const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'dacn-'));
-    const videoPath = path.join(tmpDir, path.basename(filename));
-    const audioPath = path.join(tmpDir, path.basename(filename) + '.wav');
+    const videoPath = path.join(tmpDir, 'source_' + path.basename(filename));
+    const audioPath = path.join(tmpDir, 'audio.wav');
 
     try {
-      // Mark job as running
       await pool.query(
         'INSERT INTO jobs (id, user_id, type, status, payload) VALUES (?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE status=?',
         [job.id, userId, 'transcribe', 'running', JSON.stringify(data), 'running']
       );
 
-      console.log('Downloading', videoUrl, '->', videoPath);
-      await storage.downloadToFile(videoUrl, videoPath);
-
-      console.log('Extracting audio…');
-      execSync(
-        `ffmpeg -y -i "${videoPath}" -vn -acodec pcm_s16le -ar 16000 -ac 1 "${audioPath}"`,
-        { stdio: 'inherit' }
-      );
+      if (youtubeUrl) {
+        console.log('Downloading from YouTube:', youtubeUrl);
+        const ytBase = path.join(tmpDir, 'yt_audio');
+        execSync(
+          `yt-dlp -f "bestaudio[ext=m4a]/bestaudio/best" --no-playlist -o "${ytBase}.%(ext)s" "${youtubeUrl}"`,
+          { stdio: 'inherit' }
+        );
+        const ytFile = fs.readdirSync(tmpDir).find(f => f.startsWith('yt_audio'));
+        if (!ytFile) throw new Error('yt-dlp did not produce an output file');
+        const ytFilePath = path.join(tmpDir, ytFile);
+        execSync(
+          `ffmpeg -y -i "${ytFilePath}" -vn -acodec pcm_s16le -ar 16000 -ac 1 "${audioPath}"`,
+          { stdio: 'inherit' }
+        );
+      } else {
+        console.log('Downloading', videoUrl, '->', videoPath);
+        await storage.downloadToFile(videoUrl, videoPath);
+        console.log('Extracting audio…');
+        execSync(
+          `ffmpeg -y -i "${videoPath}" -vn -acodec pcm_s16le -ar 16000 -ac 1 "${audioPath}"`,
+          { stdio: 'inherit' }
+        );
+      }
 
       console.log('Transcribing via AI service…');
       const transcriptObj = await transcribeViaService(audioPath);

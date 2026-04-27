@@ -35,6 +35,26 @@ const upload = multer({
 router.get('/health', (_req, res) => res.json({ ok: true }));
 
 // ── Upload & enqueue ──────────────────────────────────────────────────────────
+router.post('/upload-youtube', async (req, res) => {
+  try {
+    const { youtubeUrl } = req.body;
+    if (!youtubeUrl) return res.status(400).json({ error: 'youtubeUrl is required' });
+
+    const ytRegex = /^https?:\/\/(www\.)?(youtube\.com\/watch|youtu\.be\/)/;
+    if (!ytRegex.test(youtubeUrl)) return res.status(400).json({ error: 'Invalid YouTube URL' });
+
+    const job = await enqueueTranscription({
+      youtubeUrl,
+      filename: `YouTube — ${youtubeUrl.slice(0, 60)}`,
+      userId: req.user.userId,
+    });
+    res.json({ jobId: job.id, videoId: job.id, youtubeUrl });
+  } catch (err) {
+    console.error('YouTube upload error', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 router.post('/upload', upload.single('video'), async (req, res) => {
   try {
     const file = req.file;
@@ -257,6 +277,78 @@ router.get('/transcripts/:videoId/quiz', async (req, res) => {
     }));
 
     res.json({ videoId: req.params.videoId, quizId: quiz.id, mcqs, count: mcqs.length, model: quiz.model, createdAt: quiz.created_at });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── Quiz attempts ─────────────────────────────────────────────────────────────
+router.post('/transcripts/:videoId/quiz/attempt', async (req, res) => {
+  try {
+    const [jobRows] = await mysql.execute(
+      'SELECT id FROM jobs WHERE id = ? AND user_id = ?',
+      [req.params.videoId, req.user.userId]
+    );
+    if (jobRows.length === 0) return res.status(404).json({ error: 'Job not found' });
+
+    const [quizRows] = await mysql.execute(
+      'SELECT id FROM quizzes WHERE job_id = ? AND user_id = ? ORDER BY created_at DESC LIMIT 1',
+      [req.params.videoId, req.user.userId]
+    );
+    if (quizRows.length === 0) return res.status(404).json({ error: 'No quiz found — generate one first' });
+
+    const quizId = quizRows[0].id;
+    const [questions] = await mysql.execute(
+      'SELECT position, question, options, correct_index, correct_answer FROM questions WHERE quiz_id = ? ORDER BY position',
+      [quizId]
+    );
+
+    const { answers } = req.body;
+    if (!Array.isArray(answers) || answers.length !== questions.length) {
+      return res.status(400).json({ error: `Expected ${questions.length} answers, got ${answers?.length ?? 0}` });
+    }
+
+    let correct = 0;
+    const details = questions.map((q, i) => {
+      const opts = typeof q.options === 'string' ? JSON.parse(q.options) : q.options;
+      const isCorrect = answers[i] === q.correct_index;
+      if (isCorrect) correct++;
+      return {
+        question:      q.question,
+        userIndex:     answers[i],
+        userAnswer:    opts[answers[i]] ?? null,
+        correctIndex:  q.correct_index,
+        correctAnswer: q.correct_answer,
+        correct:       isCorrect,
+      };
+    });
+
+    const score = (correct / questions.length) * 100;
+    await mysql.execute(
+      'INSERT INTO quiz_attempts (quiz_id, user_id, score, total, details, finished_at) VALUES (?, ?, ?, ?, ?, NOW())',
+      [quizId, req.user.userId, score.toFixed(2), questions.length, JSON.stringify(details)]
+    );
+
+    res.json({ score: parseFloat(score.toFixed(2)), correct, total: questions.length, details });
+  } catch (err) {
+    console.error('Quiz attempt error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.get('/transcripts/:videoId/quiz/attempts', async (req, res) => {
+  try {
+    const [quizRows] = await mysql.execute(
+      'SELECT id FROM quizzes WHERE job_id = ? AND user_id = ? ORDER BY created_at DESC LIMIT 1',
+      [req.params.videoId, req.user.userId]
+    );
+    if (quizRows.length === 0) return res.json({ attempts: [] });
+
+    const [attempts] = await mysql.execute(
+      'SELECT id, score, total, finished_at, created_at FROM quiz_attempts WHERE quiz_id = ? AND user_id = ? ORDER BY created_at DESC LIMIT 10',
+      [quizRows[0].id, req.user.userId]
+    );
+    res.json({ attempts });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

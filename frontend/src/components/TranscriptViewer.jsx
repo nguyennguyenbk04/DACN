@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { api } from '../services/api';
 import VideoPlayer from './VideoPlayer';
-import MCQViewer from './MCQViewer';
+import QuizPlayer from './QuizPlayer';
 
 const LANGUAGES = [
   { code: 'vi', label: 'Vietnamese' }, { code: 'en', label: 'English' },
@@ -398,7 +398,7 @@ export default function TranscriptViewer({ videoId, onClose }) {
                 Generating quiz — this may take a moment…
               </div>
             )}
-            {!generatingMCQ && mcqs.length > 0 && <MCQViewer mcqs={mcqs} />}
+            {!generatingMCQ && mcqs.length > 0 && <QuizPlayer mcqs={mcqs} videoId={videoId} />}
           </section>
 
           {/* ── Evaluation (academic) ── */}

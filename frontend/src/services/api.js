@@ -23,6 +23,9 @@ apiClient.interceptors.response.use(
 
 export const api = {
   // ── Upload ────────────────────────────────────────────────────────────────
+  uploadYoutube: (youtubeUrl) =>
+    apiClient.post('/upload-youtube', { youtubeUrl }).then(r => r.data),
+
   uploadFile: (file, onUploadProgress) => {
     const formData = new FormData();
     formData.append('video', file);
@@ -51,6 +54,10 @@ export const api = {
     apiClient.post(`/transcripts/${videoId}/mcq`, { numQuestions }).then(r => r.data),
   getSavedQuiz: (videoId) =>
     apiClient.get(`/transcripts/${videoId}/quiz`).then(r => r.data),
+  submitQuizAttempt: (videoId, answers) =>
+    apiClient.post(`/transcripts/${videoId}/quiz/attempt`, { answers }).then(r => r.data),
+  getQuizAttempts: (videoId) =>
+    apiClient.get(`/transcripts/${videoId}/quiz/attempts`).then(r => r.data),
 
   // ── Evaluation ────────────────────────────────────────────────────────────
   evaluateWER:   (hypothesis, reference) =>

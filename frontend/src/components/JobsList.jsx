@@ -18,6 +18,14 @@ export default function JobsList({ refreshTrigger, onSelectJob }) {
 
   useEffect(() => { loadJobs(); }, [page, refreshTrigger]);
 
+  // Auto-poll every 4 s while any job is running or queued
+  useEffect(() => {
+    const hasActive = jobs.some(j => j.status === 'running' || j.status === 'queued');
+    if (!hasActive) return;
+    const id = setInterval(loadJobs, 4000);
+    return () => clearInterval(id);
+  }, [jobs]);
+
   async function loadJobs() {
     setLoading(true);
     try {
