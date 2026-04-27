@@ -1,4 +1,5 @@
 const express = require('express');
+const rateLimit = require('express-rate-limit');
 const dotenv = require('dotenv');
 dotenv.config();
 
@@ -9,28 +10,31 @@ const authRouter = require('./routes/auth');
 const authMiddleware = require('./middleware/auth');
 
 async function start() {
-  // Connect to MongoDB
   try { await connectMongo(); } catch (e) { console.warn('Mongo connect failed', e.message); }
-
-  // Test MySQL connection
-  try { const conn = await pool.getConnection(); conn.release(); console.log('MySQL connected'); } catch (e) { console.warn('MySQL connect failed', e.message); }
+  try {
+    const conn = await pool.getConnection();
+    conn.release();
+    console.log('MySQL connected');
+  } catch (e) { console.warn('MySQL connect failed', e.message); }
 
   const app = express();
-  
-  // Enable CORS for frontend
+
+  const allowedOrigin = process.env.FRONTEND_URL || 'http://localhost:5173';
   app.use((req, res, next) => {
-    res.header('Access-Control-Allow-Origin', 'http://localhost:5173');
+    res.header('Access-Control-Allow-Origin', allowedOrigin);
     res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
     res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-    if (req.method === 'OPTIONS') {
-      return res.sendStatus(200);
-    }
+    if (req.method === 'OPTIONS') return res.sendStatus(200);
     next();
   });
-  
+
   app.use(express.json());
-  app.use('/api/auth', authRouter);        // public: login & register
-  app.use('/api', authMiddleware, apiRouter); // protected: everything else
+
+  // Global rate limit: 200 req / 15 min per IP
+  app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 200, standardHeaders: true, legacyHeaders: false }));
+
+  app.use('/api/auth', authRouter);
+  app.use('/api', authMiddleware, apiRouter);
 
   const port = process.env.PORT || 4000;
   app.listen(port, () => console.log(`Backend running on http://localhost:${port}`));

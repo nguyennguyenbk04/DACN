@@ -1,16 +1,48 @@
+x-backend-env: &backend-env
+  PORT: "4000"
+  FRONTEND_URL: "http://localhost:80"
+  JWT_SECRET: ${JWT_SECRET}
+  # MySQL — use service name, internal port 3306
+  MYSQL_HOST: mysql_dacn
+  MYSQL_PORT: "3306"
+  MYSQL_USER: ${MYSQL_USER:-appuser}
+  MYSQL_PASSWORD: ${MYSQL_PASSWORD:-appuser123}
+  MYSQL_DATABASE: ${MYSQL_DATABASE:-appdb}
+  # MongoDB
+  MONGODB_URI: mongodb://mongodb:27017
+  MONGODB_NAME: ${MONGODB_DATABASE:-appdb}
+  # Redis
+  REDIS_URL: redis://redis:6379
+  # MinIO
+  MINIO_ENDPOINT: http://minio:9000
+  MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-minioadmin}
+  MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin123}
+  MINIO_BUCKET: dacn-videos
+  # AI service
+  AI_SERVICE_URL: http://ai_service:8000
+  GROQ_API_KEY: ${GROQ_API_KEY}
+
 services:
+  # ── Infrastructure ──────────────────────────────────────────────────────────
   mysql_dacn:
     image: mysql:8.0.35
     container_name: mysql_dacn
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root123}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-appdb}
       MYSQL_USER: ${MYSQL_USER:-appuser}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-apppassword}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-appuser123}
     ports:
-      - "${MYSQL_PORT:-3307}:3306"   # changed host port to 3307
+      - "${MYSQL_PORT:-3307}:3306"
     volumes:
       - mysql_data:/var/lib/mysql
+      - ./mysql_schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${MYSQL_ROOT_PASSWORD:-root123}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
     restart: unless-stopped
 
   mongodb:
@@ -40,16 +72,91 @@ services:
       - "${MINIO_API_PORT:-9000}:9000"
       - "${MINIO_CONSOLE_PORT:-9001}:9001"
     environment:
-      - MINIO_ROOT_USER=${MINIO_ROOT_USER}
-      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin123}
     command: server /data --console-address ":9001"
     volumes:
       - minio_data:/data
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
       interval: 30s
-      timeout: 20s
+      timeout: 10s
       retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+  # ── AI service ──────────────────────────────────────────────────────────────
+  ai_service:
+    build:
+      context: ../ai_service
+      dockerfile: Dockerfile
+    container_name: ai_service
+    ports:
+      - "${AI_SERVICE_PORT:-8000}:8000"
+    environment:
+      WHISPER_MODEL: ${WHISPER_MODEL:-base}
+      PEGASUS_MODEL_PATH: /app/pegasus-trained/content/pegasus-trained
+      GROQ_API_KEY: ${GROQ_API_KEY}
+    volumes:
+      - ../pegasus-trained:/app/pegasus-trained:ro
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+    restart: unless-stopped
+
+  # ── Backend API ─────────────────────────────────────────────────────────────
+  backend:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    container_name: backend
+    ports:
+      - "4000:4000"
+    environment:
+      <<: *backend-env
+    depends_on:
+      mysql_dacn:
+        condition: service_healthy
+      mongodb:
+        condition: service_started
+      redis:
+        condition: service_started
+      minio:
+        condition: service_healthy
+      ai_service:
+        condition: service_started
+    restart: unless-stopped
+
+  # ── BullMQ worker ───────────────────────────────────────────────────────────
+  worker:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    container_name: worker
+    command: node src/worker/worker.js
+    environment:
+      <<: *backend-env
+    depends_on:
+      backend:
+        condition: service_started
+    restart: unless-stopped
+
+  # ── Frontend ────────────────────────────────────────────────────────────────
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: http://localhost:4000/api
+    container_name: frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
 
 volumes:
   mysql_data:

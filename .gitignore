@@ -10,10 +10,11 @@ __pycache__/
 node_modules/
 npm-debug.log*
 
-# Environment files (contain credentials)
+# Environment files (contain credentials) — .env.example files ARE committed
 .env
 .env.local
 .env.*.local
+!.env.example
 
 # Model weights (too large for GitHub — store on HuggingFace Hub or Google Drive)
 pegasus-trained/content/pegasus-trained/model.safetensors

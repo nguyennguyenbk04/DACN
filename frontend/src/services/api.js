@@ -1,19 +1,15 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:4000/api';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
 
-// Create an axios instance that auto-attaches the JWT token
 const apiClient = axios.create({ baseURL: API_URL });
 
 apiClient.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
+  if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
 
-// Redirect to login on 401
 apiClient.interceptors.response.use(
   (res) => res,
   (err) => {
@@ -26,67 +22,46 @@ apiClient.interceptors.response.use(
 );
 
 export const api = {
-  // Upload video/audio file
-  uploadFile: async (file, onUploadProgress) => {
+  // ── Upload ────────────────────────────────────────────────────────────────
+  uploadFile: (file, onUploadProgress) => {
     const formData = new FormData();
     formData.append('video', file);
-    
-    const response = await apiClient.post('/upload', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
+    return apiClient.post('/upload', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
       onUploadProgress,
-    });
-    return response.data;
+    }).then(r => r.data);
   },
 
-  // Get all jobs with pagination
-  getJobs: async (page = 1, limit = 10) => {
-    const response = await apiClient.get('/jobs', {
-      params: { page, limit },
-    });
-    return response.data;
-  },
+  // ── Jobs ──────────────────────────────────────────────────────────────────
+  getJobs:   (page = 1, limit = 10) => apiClient.get('/jobs', { params: { page, limit } }).then(r => r.data),
+  getJob:    (jobId)  => apiClient.get(`/jobs/${jobId}`).then(r => r.data),
+  deleteJob: (jobId)  => apiClient.delete(`/jobs/${jobId}`).then(r => r.data),
 
-  // Get job details
-  getJob: async (jobId) => {
-    const response = await apiClient.get(`/jobs/${jobId}`);
-    return response.data;
-  },
+  // ── Transcripts ───────────────────────────────────────────────────────────
+  getTranscript: (videoId) => apiClient.get(`/transcripts/${videoId}`).then(r => r.data),
 
-  // Delete a job
-  deleteJob: async (jobId) => {
-    const response = await apiClient.delete(`/jobs/${jobId}`);
-    return response.data;
-  },
+  // ── Summary ───────────────────────────────────────────────────────────────
+  generateSummary: (videoId, options = {}) =>
+    apiClient.post(`/transcripts/${videoId}/summarize`, options).then(r => r.data),
+  getSavedSummary: (videoId) =>
+    apiClient.get(`/transcripts/${videoId}/summary`).then(r => r.data),
 
-  // Get transcript
-  getTranscript: async (videoId) => {
-    const response = await apiClient.get(`/transcripts/${videoId}`);
-    return response.data;
-  },
+  // ── Quiz ──────────────────────────────────────────────────────────────────
+  generateMCQ: (videoId, numQuestions = 5) =>
+    apiClient.post(`/transcripts/${videoId}/mcq`, { numQuestions }).then(r => r.data),
+  getSavedQuiz: (videoId) =>
+    apiClient.get(`/transcripts/${videoId}/quiz`).then(r => r.data),
 
-  // Generate summary
-  generateSummary: async (videoId, options = {}) => {
-    const response = await apiClient.post(`/transcripts/${videoId}/summarize`, options);
-    return response.data;
-  },
+  // ── Evaluation ────────────────────────────────────────────────────────────
+  evaluateWER:   (hypothesis, reference) =>
+    apiClient.post('/evaluate/wer',   { hypothesis, reference }).then(r => r.data),
+  evaluateROUGE: (hypothesis, reference) =>
+    apiClient.post('/evaluate/rouge', { hypothesis, reference }).then(r => r.data),
 
-  // Generate MCQs
-  generateMCQ: async (videoId, numQuestions = 5) => {
-    const response = await apiClient.post(`/transcripts/${videoId}/mcq`, { numQuestions });
-    return response.data;
-  },
+  // ── Translation ───────────────────────────────────────────────────────────
+  translateText: (text, targetLang) =>
+    apiClient.post('/translate', { text, targetLang }).then(r => r.data),
 
-  // Translate text
-  translateText: async (text, targetLang) => {
-    const response = await apiClient.post('/translate', { text, targetLang });
-    return response.data;
-  },
-
-  // List uploaded videos from MinIO
-  getVideos: async () => {
-    const response = await apiClient.get('/videos');
-    return response.data;
-  },
+  // ── Videos ────────────────────────────────────────────────────────────────
+  getVideos: () => apiClient.get('/videos').then(r => r.data),
 };
