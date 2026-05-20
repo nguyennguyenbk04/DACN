@@ -1,0 +1,41 @@
+\chapter{Conclusion}
+
+\section{Summary of Accomplishments}
+
+This project set out to build an end-to-end system that transforms recorded lectures into structured learning materials - transcripts, summaries, and multiple-choice questions - without requiring manual effort from the instructor or the learner. The final implementation achieves that goal across every layer of the stack.
+
+On the infrastructure side, the system runs as a set of containerised services orchestrated with Docker Compose, comprising a Node.js REST API, a React single-page frontend, a FastAPI AI service, MySQL and MongoDB databases, Redis for job queuing, and MinIO for object storage. A BullMQ worker process handles all long-running AI jobs asynchronously, and a CI pipeline on GitHub Actions validates every push. Videos are accepted either by direct upload or by YouTube URL, and the frontend polls automatically until processing completes.
+
+The AI pipeline integrates three models, each chosen for a specific capability. Whisper converts lecture audio to text; we evaluated five model sizes against a 30-minute Yale lecture and selected the \textit{small} variant as the best balance of accuracy (WER 18.68\%, CER 16.47\%) and runtime (114 seconds). For summarization, we adopted a Longformer Encoder-Decoder model fine-tuned on long-document data. Evaluated across three public benchmarks, it achieved a ROUGE-1 of 0.3403 on PubMed biomedical articles — the domain closest to academic lecture text — with an average inference time of 16 seconds per document on CPU. For question generation, a two-stage pipeline produces complete multiple-choice items: a sequence-to-sequence model fine-tuned on reading comprehension data generates the question and answer, and a second model fine-tuned on multiple-choice examination data generates three distractors. A word-embedding fallback covers cases where the distractor model underperforms. Evaluated on 20 SQuAD v1.1 contexts, the pipeline achieved a ROUGE-1 of 0.3528 for question quality, a 90\% generation rate, and 100\% answer-echo avoidance across all generated items.
+
+Together, these components form a working system that a student can use to process a recorded lecture end-to-end in a single session.
+
+\section{Limitations}
+
+Despite meeting its core objectives, the system has several limitations worth acknowledging.
+
+All AI inference runs on CPU inside the Docker container. For summarization, this means 16 seconds per PubMed-length article under optimal conditions; very long lectures or simultaneous users would cause noticeable queuing delays. The system has not been load-tested beyond single-user scenarios.
+
+The summarization model was not fine-tuned on lecture-domain data. Although it performs well on long structured documents, academic speech - with its digressions, hedged assertions, and incomplete sentences — differs from the book and biomedical text the model trained on. The generated summaries are coherent but occasionally miss lecture-specific emphasis.
+
+Distractor quality has room for improvement: 61.1\% of MCQs passed the no-filler check, meaning a substantial minority contained generic or degenerate options. This is most pronounced when the answer span is a short number or proper noun, where the distractor model lacks sufficient topical context.
+
+The system currently processes one question per passage context. Generating multiple non-redundant questions from the same passage - a common requirement in real assessments - is not yet supported.
+
+\section{Future Work}
+
+Several directions are open for continued development.
+
+\textbf{Model acceleration.} Exporting the LED and question-generation models to ONNX and applying dynamic quantization would reduce CPU inference latency substantially. GPU support via an environment variable switch — already prepared in the Dockerfile — would allow deployment on GPU-equipped hosts with no code change.
+
+\textbf{Domain fine-tuning.} Fine-tuning the summarization model on a lecture transcript corpus, or on a mixture of academic speech and long-form documents, would likely improve summary coherence for the target domain. A small labelled dataset of lecture–summary pairs, even a few hundred examples, would be sufficient for supervised continued training.
+
+\textbf{Improved distractor generation.} Filtering the distractor model's output with a named-entity tagger and a subject-specific lexicon would reduce filler options. Alternatively, replacing the word-embedding fallback with a retrieval step over the passage itself — selecting plausible but incorrect spans — would tie distractors more tightly to the source material.
+
+\textbf{Multi-question generation.} Extending the pipeline to extract multiple answer spans per passage and generate a non-redundant question set would allow the system to produce full quiz sheets from a single lecture without manual intervention.
+
+\textbf{Multilingual support.} Whisper already supports over 90 languages, and the translation endpoint is wired into the backend. Extending the summarization and MCQ pipelines to operate on translated text — or replacing them with multilingual sequence-to-sequence models - would open the system to non-English lecture content.
+
+\textbf{Cloud deployment and scalability.} Moving the object store to a managed service, deploying the AI worker on an auto-scaling GPU instance, and placing the API behind a load balancer would allow the platform to serve concurrent users reliably. A CI/CD pipeline already exists; the remaining work is infrastructure provisioning and a production environment configuration.
+
+\textbf{Richer learning features.} Automatic mind-map generation from the transcript, flashcard sets derived from the question–answer pairs, and an AI chatbot that answers questions using the lecture content as a retrieval corpus are all natural extensions that would deepen the system's value as a learning support tool.

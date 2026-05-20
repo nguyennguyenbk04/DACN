@@ -19,15 +19,15 @@ CREATE TABLE IF NOT EXISTS jobs (
   id         VARCHAR(64)  NOT NULL PRIMARY KEY,  -- BullMQ job id
   user_id    BIGINT UNSIGNED NOT NULL,
   type       VARCHAR(64),
-  status     ENUM('queued','running','completed','failed') NOT NULL DEFAULT 'queued',
+  status     ENUM('ready','queued','running','completed','failed') NOT NULL DEFAULT 'ready',
   payload    JSON,
   result     JSON,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-CREATE INDEX IF NOT EXISTS idx_jobs_user   ON jobs(user_id);
-CREATE INDEX IF NOT EXISTS idx_jobs_status ON jobs(status);
+CREATE INDEX idx_jobs_user   ON jobs(user_id);
+CREATE INDEX idx_jobs_status ON jobs(status);
 
 -- ── Summaries (one per generation run, keyed to job) ─────────────────────────
 CREATE TABLE IF NOT EXISTS summaries (
@@ -41,7 +41,7 @@ CREATE TABLE IF NOT EXISTS summaries (
   FOREIGN KEY (job_id)  REFERENCES jobs(id) ON DELETE CASCADE,
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-CREATE INDEX IF NOT EXISTS idx_summaries_job ON summaries(job_id);
+CREATE INDEX idx_summaries_job ON summaries(job_id);
 
 -- ── Quizzes (one per generation run) ─────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS quizzes (
@@ -53,7 +53,7 @@ CREATE TABLE IF NOT EXISTS quizzes (
   FOREIGN KEY (job_id)  REFERENCES jobs(id) ON DELETE CASCADE,
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-CREATE INDEX IF NOT EXISTS idx_quizzes_job ON quizzes(job_id);
+CREATE INDEX idx_quizzes_job ON quizzes(job_id);
 
 -- ── Questions (MCQ options + correct answer stored as JSON) ──────────────────
 CREATE TABLE IF NOT EXISTS questions (
@@ -67,7 +67,7 @@ CREATE TABLE IF NOT EXISTS questions (
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (quiz_id) REFERENCES quizzes(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-CREATE INDEX IF NOT EXISTS idx_questions_quiz ON questions(quiz_id);
+CREATE INDEX idx_questions_quiz ON questions(quiz_id);
 
 -- ── Quiz attempts (user practice scores) ─────────────────────────────────────
 CREATE TABLE IF NOT EXISTS quiz_attempts (
@@ -82,4 +82,4 @@ CREATE TABLE IF NOT EXISTS quiz_attempts (
   FOREIGN KEY (quiz_id)  REFERENCES quizzes(id) ON DELETE CASCADE,
   FOREIGN KEY (user_id)  REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-CREATE INDEX IF NOT EXISTS idx_attempts_quiz ON quiz_attempts(quiz_id);
+CREATE INDEX idx_attempts_quiz ON quiz_attempts(quiz_id);

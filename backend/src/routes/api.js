@@ -5,9 +5,11 @@ const { uploadLocalFile, getPresignedUrl, listObjects } = require('../services/s
 const { enqueueTranscription } = require('../services/queueService');
 const mysql = require('../db/mysql');
 const Transcript = require('../models/transcript');
-const { summarizeWithPegasus } = require('../services/summarizerService');
+const { summarize } = require('../services/summarizerService');
 const { generateMCQ } = require('../services/mcqService');
 const { translate } = require('@vitalets/google-translate-api');
+
+const { randomUUID } = require('crypto');
 
 const router = express.Router();
 const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'http://localhost:8000';
@@ -34,7 +36,7 @@ const upload = multer({
 // ── Health ────────────────────────────────────────────────────────────────────
 router.get('/health', (_req, res) => res.json({ ok: true }));
 
-// ── Upload & enqueue ──────────────────────────────────────────────────────────
+// ── Upload (store only — no transcription yet) ────────────────────────────────
 router.post('/upload-youtube', async (req, res) => {
   try {
     const { youtubeUrl } = req.body;
@@ -43,12 +45,13 @@ router.post('/upload-youtube', async (req, res) => {
     const ytRegex = /^https?:\/\/(www\.)?(youtube\.com\/watch|youtu\.be\/)/;
     if (!ytRegex.test(youtubeUrl)) return res.status(400).json({ error: 'Invalid YouTube URL' });
 
-    const job = await enqueueTranscription({
-      youtubeUrl,
-      filename: `YouTube — ${youtubeUrl.slice(0, 60)}`,
-      userId: req.user.userId,
-    });
-    res.json({ jobId: job.id, videoId: job.id, youtubeUrl });
+    const jobId = randomUUID();
+    const payload = { youtubeUrl, filename: `YouTube — ${youtubeUrl.slice(0, 60)}`, userId: req.user.userId };
+    await mysql.query(
+      'INSERT INTO jobs (id, user_id, type, status, payload) VALUES (?, ?, ?, ?, ?)',
+      [jobId, req.user.userId, 'transcribe', 'ready', JSON.stringify(payload)]
+    );
+    res.json({ jobId, videoId: jobId, youtubeUrl });
   } catch (err) {
     console.error('YouTube upload error', err);
     res.status(500).json({ error: err.message });
@@ -60,19 +63,48 @@ router.post('/upload', upload.single('video'), async (req, res) => {
     const file = req.file;
     if (!file) return res.status(400).json({ error: 'No file provided' });
 
+    const jobId = randomUUID();
     const url = await uploadLocalFile(file.path, file.originalname);
-    const job = await enqueueTranscription({
-      videoUrl: url,
-      filename: file.originalname,
-      userId: req.user.userId,
-    });
+    const payload = { videoUrl: url, filename: file.originalname, userId: req.user.userId };
+    await mysql.query(
+      'INSERT INTO jobs (id, user_id, type, status, payload) VALUES (?, ?, ?, ?, ?)',
+      [jobId, req.user.userId, 'transcribe', 'ready', JSON.stringify(payload)]
+    );
 
     fs.unlink(file.path, () => {});
-    res.json({ jobId: job.id, videoId: job.id, url });
+    res.json({ jobId, videoId: jobId, url });
   } catch (err) {
     if (req.file) fs.unlink(req.file.path, () => {});
     console.error('Upload error', err);
     res.status(err.message.includes('Unsupported') ? 400 : 500).json({ error: err.message });
+  }
+});
+
+// ── Start transcription for a ready/failed job ────────────────────────────────
+router.post('/jobs/:jobId/transcribe', async (req, res) => {
+  try {
+    const { whisperModel = 'base' } = req.body;
+    const { jobId } = req.params;
+
+    const [[job]] = await mysql.execute(
+      'SELECT * FROM jobs WHERE id = ? AND user_id = ?',
+      [jobId, req.user.userId]
+    );
+    if (!job) return res.status(404).json({ error: 'Job not found' });
+    if (job.status !== 'ready' && job.status !== 'failed') {
+      return res.status(409).json({ error: `Job is already ${job.status}` });
+    }
+
+    const payload = { ...(job.payload || {}), whisperModel };
+    await mysql.query(
+      'UPDATE jobs SET status = ?, payload = ? WHERE id = ?',
+      ['queued', JSON.stringify(payload), jobId]
+    );
+    await enqueueTranscription(payload, jobId);
+    res.json({ ok: true, jobId, status: 'queued' });
+  } catch (err) {
+    console.error('Start transcription error', err);
+    res.status(500).json({ error: err.message });
   }
 });
 
@@ -112,7 +144,12 @@ router.get('/jobs/:jobId', async (req, res) => {
 
     const job = rows[0];
     if (job.payload?.videoUrl) {
-      job.videoPresignedUrl = await getPresignedUrl(job.payload.videoUrl, 7200).catch(() => null);
+      const internalUrl = job.payload.videoUrl;
+      const publicMinio = process.env.PUBLIC_MINIO_ENDPOINT || 'http://localhost:9000';
+      job.videoPresignedUrl = internalUrl.replace(/^http:\/\/minio:\d+/, publicMinio);
+    }
+    if (job.payload?.youtubeUrl) {
+      job.youtubeUrl = job.payload.youtubeUrl;
     }
     res.json(job);
   } catch (err) {
@@ -159,9 +196,9 @@ router.get('/transcripts/:videoId', async (req, res) => {
 
 // ── Summary — generate + persist ──────────────────────────────────────────────
 const LENGTH_MAP = {
-  short:  { max: 80,  min: 30 },
-  medium: { max: 150, min: 50 },
-  long:   { max: 280, min: 100 },
+  short:  { max: 120,  min: 40 },
+  medium: { max: 300,  min: 80 },
+  long:   { max: 512,  min: 150 },
 };
 
 router.post('/transcripts/:videoId/summarize', async (req, res) => {
@@ -175,23 +212,23 @@ router.post('/transcripts/:videoId/summarize', async (req, res) => {
     const transcript = await Transcript.findOne({ videoId: req.params.videoId });
     if (!transcript) return res.status(404).json({ error: 'Transcript not found' });
 
-    const lengthKey = LENGTH_MAP[req.body?.length] ? req.body.length : 'medium';
+    const lengthKey  = LENGTH_MAP[req.body?.length] ? req.body.length : 'medium';
+    const modelKey   = req.body?.model || 'led';
     const { max, min } = LENGTH_MAP[lengthKey];
 
     console.log(`Summarizing job ${req.params.videoId} (length=${lengthKey})…`);
-    const summary = await summarizeWithPegasus(transcript.fullText, max, min);
+    const summary = await summarize(transcript.fullText, { length: lengthKey, maxLen: max, minLen: min });
 
-    // Persist — replace previous summary for this job+length
     await mysql.execute(
       'DELETE FROM summaries WHERE job_id = ? AND length = ?',
       [req.params.videoId, lengthKey]
     );
     await mysql.execute(
       'INSERT INTO summaries (job_id, user_id, length, summary, model) VALUES (?, ?, ?, ?, ?)',
-      [req.params.videoId, req.user.userId, lengthKey, summary, 'pegasus-trained']
+      [req.params.videoId, req.user.userId, lengthKey, summary, modelKey]
     );
 
-    res.json({ videoId: req.params.videoId, summary, length: lengthKey, method: 'pegasus-trained' });
+    res.json({ videoId: req.params.videoId, summary, length: lengthKey, model: modelKey });
   } catch (err) {
     console.error('Summarization error:', err);
     res.status(500).json({ error: err.message });
@@ -224,9 +261,8 @@ router.post('/transcripts/:videoId/mcq', async (req, res) => {
     const transcript = await Transcript.findOne({ videoId: req.params.videoId });
     if (!transcript) return res.status(404).json({ error: 'Transcript not found' });
 
-    const numQuestions = Math.min(parseInt(req.body?.numQuestions) || 5, 15);
-    console.log(`Generating ${numQuestions} MCQs for job ${req.params.videoId}…`);
-    const { mcqs, model } = await generateMCQ(transcript.fullText, numQuestions);
+    console.log(`Generating MCQs for job ${req.params.videoId}…`);
+    const { mcqs, model, numQuestions } = await generateMCQ(transcript.fullText);
 
     // Persist quiz — replace previous quiz for this job
     await mysql.execute(

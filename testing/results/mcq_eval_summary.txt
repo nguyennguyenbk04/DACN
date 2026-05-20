@@ -1,0 +1,30 @@
+MCQ Pipeline Evaluation Report
+=================================
+Model (QG)         : Leaf multitask-qg-ag (T5-small, SQuAD fine-tuned)
+Model (Distractor) : Leaf race-distractors (T5-small, RACE fine-tuned)
+Dataset            : SQuAD v1.1 validation
+Samples evaluated  : 20
+
+Generation
+----------
+  Generated rate   : 90.0%  (18/20 contexts)
+  Total MCQs       : 18
+  Avg time / ctx   : 0.67s
+
+Question Quality (vs SQuAD reference questions)
+-------------------------------------------------
+  BLEU-1           : 0.2869
+  BLEU-2           : 0.1940
+  BLEU-3           : 0.1185
+  BLEU-4           : 0.0715
+  ROUGE-1 F1       : 0.3528
+  ROUGE-2 F1       : 0.1717
+  ROUGE-L F1       : 0.3366
+
+Distractor Quality
+------------------
+  Unique options   : 72.2%
+  No answer echo   : 100.0%
+  No filler opts   : 61.1%
+
+Full per-context results: /home/bnguyen/Desktop/DACN_compress./DACN/testing/results/mcq_eval.json

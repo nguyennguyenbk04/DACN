@@ -1,0 +1,33 @@
+\section{Backend test implementation}
+The backend follows a microservices-inspired architecture with clear separation between API layer, service layer, worker processes, and data persistence. The Express.js server handles HTTP requests and delegates processing tasks to background workers through a job queue system. This architecture ensures the API remains responsive even when processing long-running transcription tasks.
+\subsection{API layer}
+The REST API exposes six endpoints that handle all frontend interactions:
+\begin{itemize}
+    \item \textbf{POST /api/upload} - Accepts multipart form data containing audio or video files, validates the upload, stores files in MinIO, and creates a job entry in MySQL with pending status
+    \item \textbf{GET /api/jobs} - Returns paginated list of jobs with query parameters for page number and limit, including job metadata, status, and timestamps
+    \item \textbf{GET /api/jobs/:jobId} - Retrieves detailed job information and generates a presigned URL valid for two hours to enable secure browser access to media files
+    \item \textbf{DELETE /api/jobs/:jobId} - Removes job records from MySQL and associated transcript documents from MongoDB
+    \item \textbf{GET /api/transcripts/:videoId} - Fetches complete transcript documents including timestamped segments, full text, and language detection metadata
+    \item \textbf{POST /api/transcripts/:videoId/summarize} - Triggers summarization process using the LED model with configurable length parameters
+\end{itemize}
+
+\subsection{Storage service}
+The storage service manages MinIO object storage interactions through the AWS SDK. File uploads use S3 PutObject commands, while the getPresignedUrl function generates time-limited authenticated URLs using s3-request-presigner, enabling browser access without exposing credentials. This abstraction layer isolates storage logic and simplifies provider switching if needed.
+
+\subsection{Queue service}
+BullMQ with Redis provides job queue infrastructure. Upload requests create jobs containing video identifiers and file URLs, placing them in the transcription queue with retry logic and status monitoring. This decouples the API from long-running tasks, allowing immediate responses while processing occurs asynchronously.
+
+\subsection{Worker process}
+The worker process consumes jobs from the BullMQ queue and orchestrates the transcription pipeline:
+\begin{enumerate}
+    \item Downloads the video file from MinIO to local temporary storage
+    \item Extracts audio using FFmpeg if the source is video format
+    \item Invokes the Whisper transcription Python script as a child process
+    \item Parses the JSON output containing segments and full text
+    \item Stores the transcript in MongoDB with timestamps and metadata
+    \item Updates the job status in MySQL to completed with result details
+    \item Cleans up temporary files to manage disk space
+\end{enumerate}
+
+\subsection{Database layer}
+MySQL stores job records with columns for identifiers, status, payload, results, errors, and timestamps, using indexes on status and created\_at for query optimization. MongoDB stores transcript documents as JSON structures with video identifiers, timestamped segment arrays, full text, and language codes. This dual-database approach leverages MySQL's transactional capabilities for state management and MongoDB's document model for variable-length transcript data.

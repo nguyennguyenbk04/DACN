@@ -5,7 +5,8 @@ const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 const dotenv = require('dotenv');
 dotenv.config();
 
-const endpoint  = process.env.MINIO_ENDPOINT || `http://127.0.0.1:${process.env.MINIO_API_PORT || 9000}`;
+const endpoint       = process.env.MINIO_ENDPOINT || `http://127.0.0.1:${process.env.MINIO_API_PORT || 9000}`;
+const publicEndpoint = process.env.PUBLIC_MINIO_ENDPOINT || endpoint;
 const region    = process.env.MINIO_REGION || 'us-east-1';
 const accessKey = process.env.MINIO_ACCESS_KEY || process.env.MINIO_ROOT_USER || 'minioadmin';
 const secretKey = process.env.MINIO_SECRET_KEY || process.env.MINIO_ROOT_PASSWORD || 'minioadmin123';
@@ -51,7 +52,9 @@ async function getPresignedUrl(keyOrUrl, expiresIn = 3600) {
     if (url.pathname.startsWith(prefix)) key = decodeURIComponent(url.pathname.slice(prefix.length));
   } catch (_) { /* already a key */ }
 
-  return getSignedUrl(s3, new GetObjectCommand({ Bucket: bucket, Key: key }), { expiresIn });
+  const url = await getSignedUrl(s3, new GetObjectCommand({ Bucket: bucket, Key: key }), { expiresIn });
+  // Rewrite internal Docker hostname to public-facing endpoint for browser access
+  return url.replace(endpoint, publicEndpoint);
 }
 
 async function listObjects(prefix = '') {

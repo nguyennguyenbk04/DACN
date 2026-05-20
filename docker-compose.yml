@@ -1,6 +1,6 @@
 x-backend-env: &backend-env
   PORT: "4000"
-  FRONTEND_URL: "http://localhost:80"
+  FRONTEND_URL: "http://localhost"
   JWT_SECRET: ${JWT_SECRET}
   # MySQL — use service name, internal port 3306
   MYSQL_HOST: mysql_dacn
@@ -15,12 +15,17 @@ x-backend-env: &backend-env
   REDIS_URL: redis://redis:6379
   # MinIO
   MINIO_ENDPOINT: http://minio:9000
+  PUBLIC_MINIO_ENDPOINT: ${PUBLIC_MINIO_ENDPOINT:-http://localhost:9000}
   MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-minioadmin}
   MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin123}
   MINIO_BUCKET: dacn-videos
   # AI service
   AI_SERVICE_URL: http://ai_service:8000
-  GROQ_API_KEY: ${GROQ_API_KEY}
+  # External LLM APIs (optional — leave blank to disable)
+  GROQ_API_KEY: ${GROQ_API_KEY:-}
+  MCQ_GROQ_KEY: ${MCQ_GROQ_KEY:-}
+  OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+  ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
 
 services:
   # ── Infrastructure ────────────────────────────────────────────────────────────
@@ -95,10 +100,10 @@ services:
       - "${AI_SERVICE_PORT:-8000}:8000"
     environment:
       WHISPER_MODEL: ${WHISPER_MODEL:-base}
-      PEGASUS_MODEL_PATH: /app/pegasus-trained/content/pegasus-trained
-      GROQ_API_KEY: ${GROQ_API_KEY}
+      LED_MODEL_ID: ${LED_MODEL_ID:-pszemraj/led-base-book-summary}
+      LEAF_MODELS_PATH: /app/leaf-models
     volumes:
-      - ./pegasus-trained:/app/pegasus-trained:ro
+      - ./leaf-models:/app/leaf-models:ro
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s

@@ -1,0 +1,82 @@
+\section{Database Design}
+
+For database design in this project, we adopt a hybrid database architecture, leveraging both relational (MySQL) and document-oriented (MongoDB) databases. This approach allows the system to efficiently handle structured operational data while accommodating the flexible, unstructured nature of video transcription content. The system also utilizes Redis for job queue management and MinIO for object storage, creating a robust and scalable data ecosystem.
+
+\subsection{Relational Database (MySQL)}
+\newpage
+
+\begin{figure}[hbt]
+    \centering
+    \includegraphics[width=1\linewidth]{system/images/mysql_db.png}
+    \caption{MySQL database design}
+    \label{fig:p_mysqldb}
+\end{figure}
+
+We use MySQL (version 8.0) as the primary store for operational data where strict consistency and relational integrity are required. The database schema consists of six key tables designed to manage job tracking, video metadata, user authentication, and the assessment system.
+
+\begin{itemize}
+    \item \textbf{jobs}: This is the core operational table acting as the source of truth for the processing pipeline. It tracks the lifecycle of transcription tasks using a UUID shared with the Redis queue.
+    \begin{itemize}
+        \item \textbf{id}: The UUID reference for the job.
+        \item \textbf{status}: An ENUM type tracking states (\texttt{queued}, \texttt{running}, \texttt{completed}, \texttt{failed}).
+        \item \textbf{payload}: A JSON column storing input parameters (filename, source URL).
+        \item \textbf{result}: A JSON column capturing outputs (transcript ID, error messages).
+    \end{itemize}
+
+    \item \textbf{videos}: Stores metadata for the uploaded content, independent of the processing job.
+    \begin{itemize}
+        \item \textbf{id} and \textbf{owner\_id}: Unique video identifier and link to the user.
+        \item \textbf{storage\_key}: References the physical file location in MinIO object storage.
+        \item \textbf{status}: Tracks the availability of the media file (\texttt{uploaded}, \texttt{ready}, etc.).
+    \end{itemize}
+
+    \item \textbf{users}: Manages user identity and access control.
+    \begin{itemize}
+        \item \textbf{email}, \textbf{password\_hash}: Credentials for authentication.
+        \item \textbf{role}: Defines user permissions (e.g., \texttt{user} or \texttt{admin}).
+    \end{itemize}
+
+    \item \textbf{quizzes}: Container table for generated assessments linked to specific videos.
+    \begin{itemize}
+        \item \textbf{video\_id}: Foreign key linking the quiz to its source material.
+        \item \textbf{type}: Specifies the assessment format (e.g., multiple-choice).
+    \end{itemize}
+
+    \item \textbf{questions}: Stores the individual items for each quiz.
+    \begin{itemize}
+        \item \textbf{text} and \textbf{options}: The question prompt and JSON array of choices.
+        \item \textbf{answer}: The correct response used for automated grading.
+        \item \textbf{source\_segments}: References specific timestamps in the transcript, allowing students to review the relevant video section for each question.
+    \end{itemize}
+
+    \item \textbf{quiz\_attempts}: detailed record of user performance.
+    \begin{itemize}
+        \item \textbf{score}: The numerical result of the attempt.
+        \item \textbf{details}: A JSON log of the user's specific answers and timing information.
+    \end{itemize}
+\end{itemize}
+
+\subsection{Document Database (MongoDB)}
+
+We select MongoDB (version 6.0) for storing transcription results due to its flexible schema and ability to handle large, deeply nested documents. Transcription data varies significantly in length and structure, making a document store ideal for this use case.
+
+\begin{itemize}
+    \item \textbf{Transcript Collection}: Stores the output of the Whisper AI model. The schema is designed to support both full-text search and precise time-based navigation:
+    \begin{itemize}
+        \item \textbf{videoId}: A string index linking the document back to the MySQL job ID.
+        \item \textbf{fullText}: The complete continuous text of the transcription.
+        \item \textbf{segments}: An array of objects, where each object contains \texttt{start} and \texttt{end} timestamps alongside the corresponding text segment.
+    \end{itemize}
+\end{itemize}
+
+\subsection{Data Flow and Persistence Strategy}
+
+The data flow is designed to decouple the high-volume ingestion processing from the state management:
+
+\begin{enumerate}
+    \item \textbf{Job Creation}: When a file is uploaded, a job is immediately enqueued in Redis via BullMQ. At this stage, the job exists only in the volatile memory of the queue and is not yet recorded in the permanent MySQL database.
+    \item \textbf{Processing}: The worker consumes the job, downloads the media from MinIO, and performs the transcription.
+    \item \textbf{Persistence}: Upon completion, the result is first written to MongoDB to ensure content safety. Only after the transcript is successfully saved does the worker insert or update the record in the MySQL \texttt{jobs} table. This ensures that the relational database always reflects a consistent and complete state of processed work.
+\end{enumerate}
+
+This hybrid design ensures that structured queries (e.g., "Show me all completed jobs") are fast and efficient via MySQL, while heavy content retrieval (e.g., "Fetch the full transcript for this hour-long video") is handled by MongoDB, optimizing performance for both use cases.

@@ -1,255 +1,149 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
 
-export default function VideoPlayer({ videoUrl, segments }) {
+function getYouTubeEmbedUrl(url) {
+  try {
+    const u = new URL(url);
+    const id = u.searchParams.get('v') || u.pathname.split('/').pop();
+    return id ? `https://www.youtube.com/embed/${id}` : null;
+  } catch { return null; }
+}
+
+const VideoPlayer = forwardRef(function VideoPlayer({ videoUrl, youtubeUrl, segments = [], onTimeUpdate }, ref) {
+  const embedUrl = youtubeUrl ? getYouTubeEmbedUrl(youtubeUrl) : null;
+
+  // All hooks must come before any conditional returns
   const videoRef = useRef(null);
-  const [currentTime, setCurrentTime] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [currentCaption, setCurrentCaption] = useState('');
+  const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
-  const [showControls, setShowControls] = useState(true);
-  const controlsTimeoutRef = useRef(null);
+  const [currentCaption, setCurrentCaption] = useState('');
 
-  // Update current time as video plays
+  useImperativeHandle(ref, () => ({
+    seekTo: (time) => {
+      if (!videoRef.current) return;
+      videoRef.current.currentTime = time;
+      videoRef.current.play().catch(() => {});
+    },
+  }));
+
+  // Update caption based on current time
   useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
-
-    const handleTimeUpdate = () => {
-      setCurrentTime(video.currentTime);
-    };
-
-    const handleLoadedMetadata = () => {
-      setDuration(video.duration);
-    };
-
-    const handlePlay = () => setIsPlaying(true);
-    const handlePause = () => setIsPlaying(false);
-
-    video.addEventListener('timeupdate', handleTimeUpdate);
-    video.addEventListener('loadedmetadata', handleLoadedMetadata);
-    video.addEventListener('play', handlePlay);
-    video.addEventListener('pause', handlePause);
-
-    return () => {
-      video.removeEventListener('timeupdate', handleTimeUpdate);
-      video.removeEventListener('loadedmetadata', handleLoadedMetadata);
-      video.removeEventListener('play', handlePlay);
-      video.removeEventListener('pause', handlePause);
-    };
-  }, []);
-
-  // Find and display current caption based on video time
-  useEffect(() => {
-    if (!segments || segments.length === 0) {
-      setCurrentCaption('');
-      return;
-    }
-
-    const currentSegment = segments.find(
-      segment => currentTime >= segment.start && currentTime <= segment.end
-    );
-
-    setCurrentCaption(currentSegment ? currentSegment.text : '');
+    if (!segments.length) { setCurrentCaption(''); return; }
+    const seg = segments.find(s => currentTime >= s.start && currentTime <= s.end);
+    setCurrentCaption(seg?.text || '');
   }, [currentTime, segments]);
 
-  const handlePlayPause = () => {
+  useEffect(() => {
+    if (embedUrl) return;
     const video = videoRef.current;
     if (!video) return;
 
-    if (video.paused) {
-      video.play();
-    } else {
-      video.pause();
-    }
-  };
+    const onTimeUpd = () => {
+      setCurrentTime(video.currentTime);
+      onTimeUpdate?.(video.currentTime);
+    };
+    const onMeta  = () => setDuration(video.duration);
+    const onPlay  = () => setIsPlaying(true);
+    const onPause = () => setIsPlaying(false);
+
+    video.addEventListener('timeupdate', onTimeUpd);
+    video.addEventListener('loadedmetadata', onMeta);
+    video.addEventListener('play', onPlay);
+    video.addEventListener('pause', onPause);
+    return () => {
+      video.removeEventListener('timeupdate', onTimeUpd);
+      video.removeEventListener('loadedmetadata', onMeta);
+      video.removeEventListener('play', onPlay);
+      video.removeEventListener('pause', onPause);
+    };
+  }, [embedUrl, onTimeUpdate]);
 
   const handleSeek = (e) => {
     const video = videoRef.current;
     if (!video) return;
-
-    const seekTime = parseFloat(e.target.value);
-    video.currentTime = seekTime;
-    setCurrentTime(seekTime);
+    const t = parseFloat(e.target.value);
+    video.currentTime = t;
+    setCurrentTime(t);
   };
 
-  const handleSegmentClick = (startTime) => {
+  const handlePlayPause = () => {
     const video = videoRef.current;
     if (!video) return;
-
-    video.currentTime = startTime;
-    video.play();
+    if (video.paused) video.play().catch(() => {});
+    else video.pause();
   };
 
-  const handleMouseMove = () => {
-    setShowControls(true);
-    
-    // Clear existing timeout
-    if (controlsTimeoutRef.current) {
-      clearTimeout(controlsTimeoutRef.current);
-    }
-    
-    // Hide controls after 3 seconds of no mouse movement (only when playing)
-    if (isPlaying) {
-      controlsTimeoutRef.current = setTimeout(() => {
-        setShowControls(false);
-      }, 3000);
-    }
+  const formatTime = (s) => {
+    if (isNaN(s)) return '0:00';
+    return `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
   };
 
-  const handleMouseLeave = () => {
-    if (isPlaying) {
-      controlsTimeoutRef.current = setTimeout(() => {
-        setShowControls(false);
-      }, 1000);
-    }
-  };
-
-  // Clean up timeout on unmount
-  useEffect(() => {
-    return () => {
-      if (controlsTimeoutRef.current) {
-        clearTimeout(controlsTimeoutRef.current);
-      }
-    };
-  }, []);
-
-  // Always show controls when paused
-  useEffect(() => {
-    if (!isPlaying) {
-      setShowControls(true);
-      if (controlsTimeoutRef.current) {
-        clearTimeout(controlsTimeoutRef.current);
-      }
-    }
-  }, [isPlaying]);
-
-  const formatTime = (seconds) => {
-    if (isNaN(seconds)) return '0:00';
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
+  if (embedUrl) {
+    return (
+      <div className="w-full rounded-xl overflow-hidden bg-black" style={{ paddingTop: '56.25%', position: 'relative' }}>
+        <iframe
+          src={embedUrl}
+          className="absolute inset-0 w-full h-full"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+          title="YouTube video"
+        />
+      </div>
+    );
+  }
 
   return (
-    <div className="w-full max-w-4xl mx-auto">
-      {/* Video Container */}
-      <div 
-        className="relative bg-black rounded-lg overflow-hidden shadow-lg"
-        onMouseMove={handleMouseMove}
-        onMouseLeave={handleMouseLeave}
-      >
-        {/* Video/Audio Element */}
+    <div className="w-full rounded-xl overflow-hidden bg-black">
+      <div className="relative">
         <video
           ref={videoRef}
           src={videoUrl}
-          className="w-full cursor-pointer"
-          controls={false}
+          className="w-full"
           onClick={handlePlayPause}
-        >
-          Your browser does not support the video tag.
-        </video>
-
-        {/* Live Captions Overlay */}
+          onError={(e) => console.error('Video error:', e.target.error)}
+        />
+        {/* Subtitle overlay */}
         {currentCaption && (
-          <div className="absolute bottom-16 left-0 right-0 px-4 pointer-events-none">
-            <div className="bg-black bg-opacity-80 text-white text-center py-2 px-4 rounded-lg max-w-3xl mx-auto">
-              <p className="text-lg font-medium leading-relaxed">
-                {currentCaption}
-              </p>
+          <div className="absolute bottom-3 left-0 right-0 px-4 pointer-events-none">
+            <div className="bg-black/80 text-white text-center py-1.5 px-4 rounded-lg max-w-2xl mx-auto text-sm leading-relaxed">
+              {currentCaption}
             </div>
           </div>
         )}
-
-        {/* Custom Controls - Auto-hide */}
-        <div 
-          className={`absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-4 transition-opacity duration-300 ${
-            showControls ? 'opacity-100' : 'opacity-0'
-          }`}
-        >
-          {/* Progress Bar */}
-          <input
-            type="range"
-            min="0"
-            max={duration || 0}
-            value={currentTime}
-            onChange={handleSeek}
-            className="w-full h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer mb-3"
-            style={{
-              background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${(currentTime / duration) * 100}%, #4b5563 ${(currentTime / duration) * 100}%, #4b5563 100%)`
-            }}
-          />
-
-          {/* Control Buttons */}
-          <div className="flex items-center justify-between text-white">
-            <div className="flex items-center gap-4">
-              {/* Play/Pause Button */}
-              <button
-                onClick={handlePlayPause}
-                className="bg-blue-600 hover:bg-blue-700 rounded-full p-3 transition-colors"
-              >
-                {isPlaying ? (
-                  <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
-                  </svg>
-                ) : (
-                  <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M8 5v14l11-7z" />
-                  </svg>
-                )}
-              </button>
-
-              {/* Time Display */}
-              <span className="text-sm font-mono">
-                {formatTime(currentTime)} / {formatTime(duration)}
-              </span>
-            </div>
-
-            {/* Volume/Settings could go here */}
-            <div className="text-xs text-gray-300">
-              {segments?.length || 0} segments
-            </div>
-          </div>
-        </div>
       </div>
 
-      {/* Segment List - Click to jump to timestamp */}
-      {segments && segments.length > 0 && (
-        <div className="mt-6 bg-white rounded-lg shadow-md p-4 max-h-96 overflow-y-auto">
-          <h3 className="text-lg font-semibold text-gray-800 mb-3">
-            Transcript Segments (Click to jump)
-          </h3>
-          <div className="space-y-2">
-            {segments.map((segment, index) => {
-              const isActive = currentTime >= segment.start && currentTime <= segment.end;
-              
-              return (
-                <button
-                  key={index}
-                  onClick={() => handleSegmentClick(segment.start)}
-                  className={`w-full text-left p-3 rounded-lg border transition-colors ${
-                    isActive
-                      ? 'bg-blue-50 border-blue-500 shadow-sm'
-                      : 'bg-gray-50 border-gray-200 hover:border-gray-300'
-                  }`}
-                >
-                  <div className="flex items-start gap-3">
-                    <span className={`text-xs font-mono min-w-[120px] ${
-                      isActive ? 'text-blue-600 font-semibold' : 'text-gray-500'
-                    }`}>
-                      {formatTime(segment.start)} → {formatTime(segment.end)}
-                    </span>
-                    <p className={`flex-1 ${
-                      isActive ? 'text-gray-900 font-medium' : 'text-gray-700'
-                    }`}>
-                      {segment.text}
-                    </p>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
+      {/* Controls */}
+      <div className="bg-[#13131f] px-4 py-3 space-y-2">
+        <input
+          type="range" min="0" max={duration || 0} value={currentTime}
+          onChange={handleSeek}
+          className="w-full h-1.5 appearance-none rounded-full cursor-pointer"
+          style={{
+            background: `linear-gradient(to right, #6366f1 0%, #6366f1 ${duration ? (currentTime / duration) * 100 : 0}%, #2a2a3e ${duration ? (currentTime / duration) * 100 : 0}%, #2a2a3e 100%)`
+          }}
+        />
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handlePlayPause}
+            className="w-8 h-8 rounded-full bg-indigo-600 hover:bg-indigo-700 flex items-center justify-center transition flex-shrink-0"
+          >
+            {isPlaying ? (
+              <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
+              </svg>
+            ) : (
+              <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M8 5v14l11-7z" />
+              </svg>
+            )}
+          </button>
+          <span className="text-xs font-mono text-[#8888a8]">
+            {formatTime(currentTime)} / {formatTime(duration)}
+          </span>
         </div>
-      )}
+      </div>
     </div>
   );
-}
+});
+
+export default VideoPlayer;

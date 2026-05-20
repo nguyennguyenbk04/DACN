@@ -1,0 +1,80 @@
+\section{MCQ Generation}
+
+Automatically generating multiple-choice questions from a passage requires two distinct capabilities: identifying a meaningful answer span and formulating a question around it, then producing plausible but incorrect distractors that challenge the reader without being trivially wrong. We address this through a two-stage pipeline. In the first stage, a sequence-to-sequence model fine-tuned on reading comprehension data takes a context passage as input and produces a question–answer pair. In the second stage, a separate sequence-to-sequence model fine-tuned on multiple-choice examination data receives the answer, the generated question, and the original context, then outputs three distractors. When the second stage returns fewer than three distinct distractors, a word-embedding model trained on large-scale conversational text provides additional candidates by retrieving semantically similar but lexically distinct terms.
+
+\subsection{Dataset}
+
+We evaluate the pipeline on the SQuAD v1.1 validation set, a widely used reading comprehension benchmark built from crowd-sourced question–answer pairs over Wikipedia passages. Each example contains a context paragraph, a factoid question, and one or more human-written answer spans extracted directly from the passage. Since the pipeline generates free-form questions conditioned on extracted answer spans, SQuAD v1.1 provides a natural evaluation ground: the generated question can be compared against the crowd-sourced reference for the same answer span, and the generated distractors can be assessed for structural validity against the original passage. We sample 20 contexts from the validation split, selecting one question–answer pair per context.
+
+\subsection{Evaluation Metrics}
+
+We measure question quality using both BLEU and ROUGE, which capture complementary aspects of n-gram similarity between the generated question and the human reference.
+
+BLEU (Bilingual Evaluation Understudy) measures modified n-gram precision — the fraction of n-grams in the generated question that also appear in the reference, clipped to avoid over-counting repeated terms. The modified precision for order $n$ is:
+\[
+p_n = \frac{\displaystyle\sum_{\text{gram}_n \in \hat{q}} \min\!\left(\text{Count}(\text{gram}_n,\, \hat{q}),\; \text{Count}(\text{gram}_n,\, q)\right)}{\displaystyle\sum_{\text{gram}_n \in \hat{q}} \text{Count}(\text{gram}_n,\, \hat{q})}
+\]
+where $\hat{q}$ is the generated question and $q$ is the reference. We report BLEU-1 through BLEU-4, with lower-order scores reflecting unigram and bigram overlap and BLEU-4 requiring the generation to reproduce four-word phrases verbatim.
+
+ROUGE-1 and ROUGE-2 measure unigram and bigram recall against the reference, and ROUGE-L captures the longest common subsequence, reflecting sentence-level structural alignment. All ROUGE scores are reported as F1 values:
+\[
+\text{ROUGE-N} = \frac{\displaystyle\sum_{\text{gram}_n \in q} \text{Count}_{\text{match}}(\text{gram}_n)}{\displaystyle\sum_{\text{gram}_n \in q} \text{Count}(\text{gram}_n)}
+\]
+
+In addition to question quality, we evaluate distractor validity using three structural checks: whether all four options are lexically distinct (\textit{unique options}), whether no distractor matches the correct answer (\textit{no answer echo}), and whether no option consists of a generic filler phrase such as ``None of the above'' or an empty string (\textit{no filler options}).
+
+\subsection{Results and Discussion}
+
+Table~\ref{tab:mcq_question} presents the BLEU and ROUGE scores for generated questions against SQuAD v1.1 references, and Table~\ref{tab:mcq_distractor} summarizes distractor validity and generation statistics.
+
+\begin{table}[h!]
+\centering
+\caption{Question Quality Scores on SQuAD v1.1 (20 contexts)}
+\label{tab:mcq_question}
+\begin{tabular}{|l|c|}
+\hline
+\textbf{Metric} & \textbf{Score} \\
+\hline
+BLEU-1    & 0.2869 \\
+\hline
+BLEU-2    & 0.1940 \\
+\hline
+BLEU-3    & 0.1185 \\
+\hline
+BLEU-4    & 0.0715 \\
+\hline
+ROUGE-1 F1 & 0.3528 \\
+\hline
+ROUGE-2 F1 & 0.1717 \\
+\hline
+ROUGE-L F1 & 0.3366 \\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{table}[h!]
+\centering
+\caption{Distractor Validity and Generation Statistics}
+\label{tab:mcq_distractor}
+\begin{tabular}{|l|c|}
+\hline
+\textbf{Metric} & \textbf{Value} \\
+\hline
+Generation rate       & 90.0\% (18/20 contexts) \\
+\hline
+Unique options        & 72.2\% \\
+\hline
+No answer echo        & 100.0\% \\
+\hline
+No filler options     & 61.1\% \\
+\hline
+Avg time per context  & 0.67s \\
+\hline
+\end{tabular}
+\end{table}
+
+The question quality scores reflect a pipeline that has learned to formulate factoid questions but does not reproduce reference phrasing verbatim. A ROUGE-1 of 0.3528 indicates moderate lexical overlap with the reference questions, while the steep drop from BLEU-1 (0.2869) to BLEU-4 (0.0715) shows that the model reproduces individual words and short phrases reasonably well but rarely matches four-word sequences exactly — a natural consequence of abstractive question formulation. This pattern is consistent with what one would expect from a generative model that has learned question syntax from training data but has no access to the specific phrasing used by the crowd-source annotators.
+
+Distractor quality is strong in the most critical dimension: no generated distractor matched the correct answer across all 18 evaluated items, confirming that the pipeline never introduces a trivially impossible question. The unique-options rate of 72.2\% indicates that roughly a quarter of MCQs contained at least one duplicate option, typically when the word-embedding fallback retrieved near-synonyms for short or numeric answer spans. The no-filler rate of 61.1\% reveals that some distractors were generic or degenerate phrases; this is most common when the answer is a brief proper noun or number where the distractor model has limited context to work from.
+
+Average generation time of 0.67 seconds per context on CPU keeps the pipeline well within an acceptable latency budget for on-demand use. For a typical lecture segment of one to three paragraphs, the full two-stage process completes quickly enough to be used in an interactive setting without noticeable delay.

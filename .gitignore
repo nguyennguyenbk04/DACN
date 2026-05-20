@@ -17,9 +17,16 @@ npm-debug.log*
 !.env.example
 !**/.env.example
 
-# Model weights (too large for GitHub — store on HuggingFace Hub or Google Drive)
-pegasus-trained/content/pegasus-trained/model.safetensors
-pegasus-trained/content/pegasus-trained/training_args.bin
+# Model weights (too large for GitHub — copy to server manually via scp)
+leaf-models/
+pegasus-trained/
+*.ckpt
+*.safetensors
+*.bin
+
+# Uploads / temp files
+uploads/
+tmp/
 
 # LaTeX build artifacts
 *.aux

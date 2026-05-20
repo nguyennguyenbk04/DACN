@@ -9,10 +9,20 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY main.py .
+# Pre-download model weights into image layer (cached between builds)
+RUN python -c "from transformers import T5ForConditionalGeneration, T5TokenizerFast; \
+    T5TokenizerFast.from_pretrained('t5-small'); \
+    T5ForConditionalGeneration.from_pretrained('t5-small')"
 
-# Mount pegasus model from host at runtime via volume (too large to COPY)
-ENV PEGASUS_MODEL_PATH=/app/pegasus-trained/content/pegasus-trained
+RUN python -c "from transformers import LEDForConditionalGeneration, AutoTokenizer; \
+    AutoTokenizer.from_pretrained('pszemraj/led-base-book-summary'); \
+    LEDForConditionalGeneration.from_pretrained('pszemraj/led-base-book-summary')"
+
+COPY main.py leaf_mcq.py ./
+
+# Leaf model checkpoints are mounted at runtime via volume
+ENV LEAF_MODELS_PATH=/app/leaf-models
+ENV LED_MODEL_ID=pszemraj/led-base-book-summary
 ENV WHISPER_MODEL=base
 
 EXPOSE 8000

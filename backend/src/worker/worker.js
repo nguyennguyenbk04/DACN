@@ -4,6 +4,8 @@ const path = require('path');
 const os = require('os');
 const fs = require('fs');
 const { execSync } = require('child_process');
+const http  = require('http');
+const https = require('https');
 const dotenv = require('dotenv');
 dotenv.config();
 
@@ -15,17 +17,52 @@ const pool = require('../db/mysql');
 
 const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'http://localhost:8000';
 
-async function transcribeViaService(audioPath) {
-  const audioBuffer = fs.readFileSync(audioPath);
-  const formData = new FormData();
-  formData.append('audio', new Blob([audioBuffer]), path.basename(audioPath));
+function transcribeViaService(audioPath, model = 'base') {
+  return new Promise((resolve, reject) => {
+    const audioBuffer = fs.readFileSync(audioPath);
+    const boundary = `--Boundary${Date.now()}`;
 
-  const res = await fetch(`${AI_SERVICE_URL}/transcribe`, { method: 'POST', body: formData });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.detail || `AI service transcription failed: ${res.status}`);
-  }
-  return res.json();
+    // Build multipart body manually — no external packages needed
+    const audioHeader = Buffer.from(
+      `--${boundary}\r\nContent-Disposition: form-data; name="audio"; filename="${path.basename(audioPath)}"\r\nContent-Type: application/octet-stream\r\n\r\n`
+    );
+    const modelPart = Buffer.from(
+      `\r\n--${boundary}\r\nContent-Disposition: form-data; name="model"\r\n\r\n${model}\r\n--${boundary}--\r\n`
+    );
+    const body = Buffer.concat([audioHeader, audioBuffer, modelPart]);
+
+    const serviceUrl = new URL(`${AI_SERVICE_URL}/transcribe`);
+    const transport = serviceUrl.protocol === 'https:' ? https : http;
+
+    const req = transport.request({
+      hostname: serviceUrl.hostname,
+      port:     serviceUrl.port || (serviceUrl.protocol === 'https:' ? 443 : 80),
+      path:     serviceUrl.pathname,
+      method:   'POST',
+      headers: {
+        'Content-Type':   `multipart/form-data; boundary=${boundary}`,
+        'Content-Length': body.length,
+      },
+      timeout: 60 * 60 * 1000,   // 1 hour — Whisper on long files can be slow
+    }, (res) => {
+      const chunks = [];
+      res.on('data', c => chunks.push(c));
+      res.on('end', () => {
+        const text = Buffer.concat(chunks).toString();
+        if (res.statusCode >= 400) {
+          const parsed = (() => { try { return JSON.parse(text); } catch { return {}; } })();
+          return reject(new Error(parsed.detail || `AI service transcription failed: ${res.statusCode}`));
+        }
+        try { resolve(JSON.parse(text)); }
+        catch { reject(new Error('Invalid JSON from AI service')); }
+      });
+    });
+
+    req.on('error', reject);
+    req.on('timeout', () => { req.destroy(); reject(new Error('Transcription request timed out')); });
+    req.write(body);
+    req.end();
+  });
 }
 
 async function startWorker() {
@@ -36,7 +73,7 @@ async function startWorker() {
   const worker = new Worker('transcribe', async job => {
     const data = job.data || {};
     console.log('Worker processing job', job.id, data);
-    const { videoUrl, youtubeUrl, filename = `video-${Date.now()}`, userId } = data;
+    const { videoUrl, youtubeUrl, filename = `video-${Date.now()}`, userId, whisperModel = 'base' } = data;
 
     const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'dacn-'));
     const videoPath = path.join(tmpDir, 'source_' + path.basename(filename));
@@ -52,7 +89,7 @@ async function startWorker() {
         console.log('Downloading from YouTube:', youtubeUrl);
         const ytBase = path.join(tmpDir, 'yt_audio');
         execSync(
-          `yt-dlp -f "bestaudio[ext=m4a]/bestaudio/best" --no-playlist -o "${ytBase}.%(ext)s" "${youtubeUrl}"`,
+          `yt-dlp -f "bestaudio[ext=m4a]/bestaudio/best" --no-playlist --extractor-args "youtube:player_client=android,web" -o "${ytBase}.%(ext)s" "${youtubeUrl}"`,
           { stdio: 'inherit' }
         );
         const ytFile = fs.readdirSync(tmpDir).find(f => f.startsWith('yt_audio'));
@@ -73,7 +110,7 @@ async function startWorker() {
       }
 
       console.log('Transcribing via AI service…');
-      const transcriptObj = await transcribeViaService(audioPath);
+      const transcriptObj = await transcribeViaService(audioPath, whisperModel);
 
       const doc = new Transcript({
         videoId: job.id,

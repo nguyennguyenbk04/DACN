@@ -1,0 +1,581 @@
+{
+  "summary": {
+    "n_contexts": 20,
+    "generated_count": 18,
+    "generation_rate_%": 90.0,
+    "total_mcqs": 18,
+    "avg_time_s": 0.67,
+    "bleu": {
+      "bleu1": 0.2869,
+      "bleu2": 0.194,
+      "bleu3": 0.1185,
+      "bleu4": 0.0715
+    },
+    "rouge": {
+      "rouge1": 0.3528,
+      "rouge2": 0.1717,
+      "rougeL": 0.3366
+    },
+    "distractor_validity_%": {
+      "unique_options": 72.2,
+      "no_echo_distractors": 100.0,
+      "no_filler": 61.1
+    }
+  },
+  "details": [
+    {
+      "context_id": 0,
+      "context": "Super Bowl 50 was an American football game to determine the champion of the National Football League (NFL) for the 2015 season. The American Football Conference (AFC) champion Denver Broncos defeated\u2026",
+      "ref_question": "Which NFL team represented the AFC at Super Bowl 50?",
+      "generated": [
+        {
+          "question": "Who defeated the National Football Conference champion Carolina Panthers?",
+          "options": [
+            "Levi's Stadium",
+            "Denver Broncos",
+            "Santa Clara",
+            "None of the above"
+          ],
+          "correctIndex": 1,
+          "correctAnswer": "Denver Broncos"
+        }
+      ],
+      "time_s": 0.62,
+      "bleu": {
+        "bleu1": 0.09942659075715217,
+        "bleu2": 0.03334869235560668,
+        "bleu3": 0.025115566621621982,
+        "bleu4": 0.02145851237135921
+      },
+      "rouge": {
+        "rouge1": 0.1053,
+        "rouge2": 0.0,
+        "rougeL": 0.1053
+      }
+    },
+    {
+      "context_id": 1,
+      "context": "The Panthers finished the regular season with a 15\u20131 record, and quarterback Cam Newton was named the NFL Most Valuable Player (MVP). They defeated the Arizona Cardinals 49\u201315 in the NFC Championship \u2026",
+      "ref_question": "Which Carolina Panthers player was named Most Valuable Player?",
+      "generated": [
+        {
+          "question": "Who was named NFL Most Valuable Player?",
+          "options": [
+            "Pittsburgh Steelers",
+            "Dallas Cowboys",
+            "Cam Newton",
+            "The Panthers"
+          ],
+          "correctIndex": 2,
+          "correctAnswer": "Cam Newton"
+        }
+      ],
+      "time_s": 0.56,
+      "bleu": {
+        "bleu1": 0.5367694950537757,
+        "bleu2": 0.4490935799743743,
+        "bleu3": 0.31455283992081945,
+        "bleu4": 0.15447878876032708
+      },
+      "rouge": {
+        "rouge1": 0.625,
+        "rouge2": 0.4286,
+        "rougeL": 0.625
+      }
+    },
+    {
+      "context_id": 2,
+      "context": "The Broncos took an early lead in Super Bowl 50 and never trailed. Newton was limited by Denver's defense, which sacked him seven times and forced him into three turnovers, including a fumble which th\u2026",
+      "ref_question": "Who was the Super Bowl 50 MVP?",
+      "generated": [
+        {
+          "question": "Who was named Super Bowl MVP?",
+          "options": [
+            "moncrief",
+            "lolb",
+            "Newton",
+            "Von Miller"
+          ],
+          "correctIndex": 3,
+          "correctAnswer": "Von Miller"
+        }
+      ],
+      "time_s": 1.14,
+      "bleu": {
+        "bleu1": 0.7054014374088451,
+        "bleu2": 0.4887164517296948,
+        "bleu3": 0.17437642719926083,
+        "bleu4": 0.10928032077900922
+      },
+      "rouge": {
+        "rouge1": 0.7692,
+        "rouge2": 0.3636,
+        "rougeL": 0.7692
+      }
+    },
+    {
+      "context_id": 3,
+      "context": "CBS broadcast Super Bowl 50 in the U.S., and charged an average of $5 million for a 30-second commercial during the game. The Super Bowl 50 halftime show was headlined by the British rock group Coldpl\u2026",
+      "ref_question": "Which network broadcasted Super Bowl 50 in the U.S.?",
+      "generated": [
+        {
+          "question": "Who were the special guest performers for the halftime show?",
+          "options": [
+            "Beyonc\u00e9 and Bruno Mars",
+            "Beyonc\u00e9",
+            "Coldplay",
+            "Bruno Mars"
+          ],
+          "correctIndex": 0,
+          "correctAnswer": "Beyonc\u00e9 and Bruno Mars"
+        }
+      ],
+      "time_s": 0.8,
+      "bleu": {
+        "bleu1": 0.10000000000000002,
+        "bleu2": 0.03333333333333335,
+        "bleu3": 0.024950558772614845,
+        "bleu4": 0.021105340631872645
+      },
+      "rouge": {
+        "rouge1": 0.1,
+        "rouge2": 0.0,
+        "rougeL": 0.1
+      }
+    },
+    {
+      "context_id": 4,
+      "context": "In early 2012, NFL Commissioner Roger Goodell stated that the league planned to make the 50th Super Bowl \"spectacular\" and that it would be \"an important game for us as a league\".",
+      "ref_question": "Who was the NFL Commissioner in early 2012?",
+      "generated": [],
+      "time_s": 0.55
+    },
+    {
+      "context_id": 5,
+      "context": "The league eventually narrowed the bids to three sites: New Orleans' Mercedes-Benz Superdome, Miami's Sun Life Stadium, and the San Francisco Bay Area's Levi's Stadium.",
+      "ref_question": "Which Louisiana venue was one of three considered for Super Bowl 50?",
+      "generated": [
+        {
+          "question": "How many sites did the league narrow the bids to?",
+          "options": [
+            "three",
+            "best",
+            "four",
+            "two"
+          ],
+          "correctIndex": 0,
+          "correctAnswer": "three"
+        }
+      ],
+      "time_s": 1.12,
+      "bleu": {
+        "bleu1": 0,
+        "bleu2": 0,
+        "bleu3": 0,
+        "bleu4": 0
+      },
+      "rouge": {
+        "rouge1": 0.0,
+        "rouge2": 0.0,
+        "rougeL": 0.0
+      }
+    },
+    {
+      "context_id": 6,
+      "context": "The league announced on October 16, 2012, that the two finalists were Sun Life Stadium and Levi's Stadium. The South Florida/Miami area has previously hosted the event 10 times (tied for most with New\u2026",
+      "ref_question": "When were the two finalists for hosting Super Bowl 50 announced?",
+      "generated": [
+        {
+          "question": "When did the Florida legislature refuse to approve the funding plan to pay for the renovations?",
+          "options": [
+            "October 16, 2012",
+            "None of the above",
+            "May 3, 2013",
+            "None of the above"
+          ],
+          "correctIndex": 2,
+          "correctAnswer": "May 3, 2013"
+        }
+      ],
+      "time_s": 0.67,
+      "bleu": {
+        "bleu1": 0.1875,
+        "bleu2": 0.03535533905932738,
+        "bleu3": 0.021565426544625413,
+        "bleu4": 0.01618861356572822
+      },
+      "rouge": {
+        "rouge1": 0.2222,
+        "rouge2": 0.0,
+        "rougeL": 0.2222
+      }
+    },
+    {
+      "context_id": 7,
+      "context": "On May 21, 2013, NFL owners at their spring meetings in Boston voted and awarded the game to Levi's Stadium. The $1.2 billion stadium opened in 2014. It is the first Super Bowl held in the San Francis\u2026",
+      "ref_question": "When was Levi's Stadium awarded the right to host Super Bowl 50?",
+      "generated": [],
+      "time_s": 0.56
+    },
+    {
+      "context_id": 8,
+      "context": "For the third straight season, the number one seeds from both conferences met in the Super Bowl. The Carolina Panthers became one of only ten teams to have completed a regular season with only one los\u2026",
+      "ref_question": "Who coached each Super Bowl 50 participant in their most recent Super Bowl appearance prior to Super Bowl 50?",
+      "generated": [
+        {
+          "question": "Who made their second Super Bowl appearance in three years?",
+          "options": [
+            "the Broncos",
+            "John Fox",
+            "the Denver Broncos",
+            "the Carolina Panthers"
+          ],
+          "correctIndex": 0,
+          "correctAnswer": "the Broncos"
+        }
+      ],
+      "time_s": 0.66,
+      "bleu": {
+        "bleu1": 0.2439417958443595,
+        "bleu2": 0.14845824922475073,
+        "bleu3": 0.10527980058637583,
+        "bleu4": 0.0505036357083331
+      },
+      "rouge": {
+        "rouge1": 0.4138,
+        "rouge2": 0.1481,
+        "rougeL": 0.3448
+      }
+    },
+    {
+      "context_id": 9,
+      "context": "Despite waiving longtime running back DeAngelo Williams and losing top wide receiver Kelvin Benjamin to a torn ACL in the preseason, the Carolina Panthers had their best regular season in franchise hi\u2026",
+      "ref_question": "Whic Carolina Panthers running back was waived?",
+      "generated": [
+        {
+          "question": "How many regular season games did the Carolina Panthers win?",
+          "options": [
+            "None of the above",
+            "16\u20130",
+            "14\u20130",
+            "17\u20130"
+          ],
+          "correctIndex": 3,
+          "correctAnswer": "17\u20130"
+        }
+      ],
+      "time_s": 0.55,
+      "bleu": {
+        "bleu1": 0.2,
+        "bleu2": 0.14907119849998599,
+        "bleu3": 0.06705330284284157,
+        "bleu4": 0.0446323613785333
+      },
+      "rouge": {
+        "rouge1": 0.2353,
+        "rouge2": 0.1333,
+        "rougeL": 0.2353
+      }
+    },
+    {
+      "context_id": 10,
+      "context": "The Panthers offense, which led the NFL in scoring (500 points), was loaded with talent, boasting six Pro Bowl selections. Pro Bowl quarterback Cam Newton had one of his best seasons, throwing for 3,8\u2026",
+      "ref_question": "How many Pro Bowlers were on the Panthers offense?",
+      "generated": [
+        {
+          "question": "Who caught a career high 77 passes for 1,104 yards and seven touchdowns?",
+          "options": [
+            "Mike Tolbert",
+            "Greg Olsen",
+            "Cam Newton",
+            "Devin Funchess"
+          ],
+          "correctIndex": 1,
+          "correctAnswer": "Greg Olsen"
+        }
+      ],
+      "time_s": 0.64,
+      "bleu": {
+        "bleu1": 0,
+        "bleu2": 0,
+        "bleu3": 0,
+        "bleu4": 0
+      },
+      "rouge": {
+        "rouge1": 0.0,
+        "rouge2": 0.0,
+        "rougeL": 0.0
+      }
+    },
+    {
+      "context_id": 11,
+      "context": "The Panthers defense gave up just 308 points, ranking sixth in the league, while also leading the NFL in interceptions with 24 and boasting four Pro Bowl selections. Pro Bowl defensive tackle Kawann S\u2026",
+      "ref_question": "How many points did the Panthers defense surrender?",
+      "generated": [
+        {
+          "question": "How many interceptions did the Panthers have?",
+          "options": [
+            "None of the above",
+            "four",
+            "None of the above",
+            "three"
+          ],
+          "correctIndex": 1,
+          "correctAnswer": "four"
+        }
+      ],
+      "time_s": 0.4,
+      "bleu": {
+        "bleu1": 0.6191984998215584,
+        "bleu2": 0.5180586332905649,
+        "bleu3": 0.3628571451775018,
+        "bleu4": 0.17820132316770917
+      },
+      "rouge": {
+        "rouge1": 0.6667,
+        "rouge2": 0.4615,
+        "rougeL": 0.6667
+      }
+    },
+    {
+      "context_id": 12,
+      "context": "Following their loss in the divisional round of the previous season's playoffs, the Denver Broncos underwent numerous coaching changes, including a mutual parting with head coach John Fox (who had won\u2026",
+      "ref_question": "Who is the head coach of the Broncos?",
+      "generated": [
+        {
+          "question": "Who did the Broncos plan to install a run-oriented offense?",
+          "options": [
+            "quarterback Wade Phillips",
+            "backup quarterback Brock Osweiler",
+            "quarterback Peyton Manning",
+            "quarterback Brock Osweiler"
+          ],
+          "correctIndex": 2,
+          "correctAnswer": "quarterback Peyton Manning"
+        }
+      ],
+      "time_s": 0.7,
+      "bleu": {
+        "bleu1": 0.2,
+        "bleu2": 0.04714045207910317,
+        "bleu3": 0.03136318607896979,
+        "bleu4": 0.025098621243978974
+      },
+      "rouge": {
+        "rouge1": 0.3158,
+        "rouge2": 0.1176,
+        "rougeL": 0.3158
+      }
+    },
+    {
+      "context_id": 13,
+      "context": "Manning finished the year with a career-low 67.9 passer rating, throwing for 2,249 yards and nine touchdowns, with 17 interceptions. In contrast, Osweiler threw for 1,967 yards, 10 touchdowns and six \u2026",
+      "ref_question": "What was Peyton Manning's passer rating for the season?",
+      "generated": [
+        {
+          "question": "Who was the team's leading rusher?",
+          "options": [
+            "Ronnie Hillman",
+            "Owen Daniels",
+            "C. J. Anderson",
+            "Demaryius Thomas"
+          ],
+          "correctIndex": 2,
+          "correctAnswer": "C. J. Anderson"
+        }
+      ],
+      "time_s": 0.54,
+      "bleu": {
+        "bleu1": 0.2021768865708778,
+        "bleu2": 0.04952302098832033,
+        "bleu3": 0.034360766750467835,
+        "bleu4": 0.02944656445786981
+      },
+      "rouge": {
+        "rouge1": 0.3529,
+        "rouge2": 0.0,
+        "rougeL": 0.2353
+      }
+    },
+    {
+      "context_id": 14,
+      "context": "The Broncos' defense ranked first in the NFL yards allowed (4,530) for the first time in franchise history, and fourth in points allowed (296). Defensive ends Derek Wolfe and Malik Jackson each had 5\u00bd\u2026",
+      "ref_question": "How many yards did the Broncos' defense give up?",
+      "generated": [
+        {
+          "question": "Who was selected to play in the Pro Bowl for the ninth time in his career?",
+          "options": [
+            "DeMarcus Ware",
+            "Malik Jackson",
+            "Danny Trevathan",
+            "Derek Wolfe"
+          ],
+          "correctIndex": 0,
+          "correctAnswer": "DeMarcus Ware"
+        }
+      ],
+      "time_s": 0.62,
+      "bleu": {
+        "bleu1": 0.0625,
+        "bleu2": 0.02041241452319315,
+        "bleu3": 0.015007489164383502,
+        "bleu4": 0.012300686288463768
+      },
+      "rouge": {
+        "rouge1": 0.08,
+        "rouge2": 0.0,
+        "rougeL": 0.08
+      }
+    },
+    {
+      "context_id": 15,
+      "context": "The Panthers beat the Seattle Seahawks in the divisional round, running up a 31\u20130 halftime lead and then holding off a furious second half comeback attempt to win 31\u201324, avenging their elimination fro\u2026",
+      "ref_question": "Who lost to the Panthers in the divisional round of the playoffs?",
+      "generated": [
+        {
+          "question": "Who did the Panthers beat in the divisional round?",
+          "options": [
+            "Arizona Cardinals",
+            "None of the above",
+            "Seattle Seahawks",
+            "None of the above"
+          ],
+          "correctIndex": 2,
+          "correctAnswer": "Seattle Seahawks"
+        }
+      ],
+      "time_s": 0.53,
+      "bleu": {
+        "bleu1": 0.47768754038252614,
+        "bleu2": 0.35826565528689464,
+        "bleu3": 0.23860141910806304,
+        "bleu4": 0.11192003885776358
+      },
+      "rouge": {
+        "rouge1": 0.6667,
+        "rouge2": 0.4211,
+        "rougeL": 0.6667
+      }
+    },
+    {
+      "context_id": 16,
+      "context": "The Broncos defeated the Pittsburgh Steelers in the divisional round, 23\u201316, by scoring 11 points in the final three minutes of the game. They then beat the defending Super Bowl XLIX champion New Engl\u2026",
+      "ref_question": "Who lost to the Broncos in the divisional round?",
+      "generated": [
+        {
+          "question": "How many points did the Broncos score in the final three minutes of the game?",
+          "options": [
+            "11",
+            "17",
+            "16",
+            "23"
+          ],
+          "correctIndex": 0,
+          "correctAnswer": "11"
+        }
+      ],
+      "time_s": 0.48,
+      "bleu": {
+        "bleu1": 0.26666666666666666,
+        "bleu2": 0.1951800145897066,
+        "bleu3": 0.06824738606716123,
+        "bleu4": 0.039530883746698414
+      },
+      "rouge": {
+        "rouge1": 0.3333,
+        "rouge2": 0.1818,
+        "rougeL": 0.3333
+      }
+    },
+    {
+      "context_id": 17,
+      "context": "Carolina suffered a major setback when Thomas Davis, an 11-year veteran who had already overcome three ACL tears in his career, went down with a broken arm in the NFC Championship Game. Despite this, \u2026",
+      "ref_question": "What Carolina player was injured in the NFC Championship Game?",
+      "generated": [
+        {
+          "question": "Who went down with a broken arm in the NFC Championship Game?",
+          "options": [
+            "None of the above",
+            "Thomas Davis",
+            "Carolina",
+            "None of the above"
+          ],
+          "correctIndex": 1,
+          "correctAnswer": "Thomas Davis"
+        }
+      ],
+      "time_s": 0.48,
+      "bleu": {
+        "bleu1": 0.4166666666666667,
+        "bleu2": 0.3892494720807615,
+        "bleu3": 0.3605790708802296,
+        "bleu4": 0.31702331385234306
+      },
+      "rouge": {
+        "rouge1": 0.4545,
+        "rouge2": 0.4,
+        "rougeL": 0.4545
+      }
+    },
+    {
+      "context_id": 18,
+      "context": "Peyton Manning became the first quarterback ever to lead two different teams to multiple Super Bowls. He is also the oldest quarterback ever to play in a Super Bowl at age 39. The past record was held\u2026",
+      "ref_question": "How old was Peyton Manning when he played in Super Bowl 50?",
+      "generated": [
+        {
+          "question": "Who led the Broncos to victory in Super Bowl XXXIII?",
+          "options": [
+            "None of the above",
+            "None of the above",
+            "John Elway",
+            "Peyton Manning"
+          ],
+          "correctIndex": 2,
+          "correctAnswer": "John Elway"
+        }
+      ],
+      "time_s": 0.64,
+      "bleu": {
+        "bleu1": 0.24561922592339458,
+        "bleu2": 0.21139537144659198,
+        "bleu3": 0.16865968793165348,
+        "bleu4": 0.08552070691615876
+      },
+      "rouge": {
+        "rouge1": 0.2727,
+        "rouge2": 0.2,
+        "rougeL": 0.2727
+      }
+    },
+    {
+      "context_id": 19,
+      "context": "This was the first Super Bowl to feature a quarterback on both teams who was the #1 pick in their draft classes. Manning was the #1 selection of the 1998 NFL draft, while Newton was picked first in 20\u2026",
+      "ref_question": "When was Manning picked #1 in the NFL Draft?",
+      "generated": [
+        {
+          "question": "Who was the #1 pick in the 1998 NFL draft?",
+          "options": [
+            "qb",
+            "Manning",
+            "Newton",
+            "Von Miller"
+          ],
+          "correctIndex": 1,
+          "correctAnswer": "Manning"
+        }
+      ],
+      "time_s": 1.14,
+      "bleu": {
+        "bleu1": 0.6,
+        "bleu2": 0.36514837167011066,
+        "bleu3": 0.12111838948674812,
+        "bleu4": 0.06985342056580097
+      },
+      "rouge": {
+        "rouge1": 0.7368,
+        "rouge2": 0.2353,
+        "rougeL": 0.6316
+      }
+    }
+  ]
+}

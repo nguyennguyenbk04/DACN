@@ -1,0 +1,17 @@
+Summarization Evaluation Report
+=================================
+Model              : pszemraj/led-base-book-summary
+Dataset            : pubmed (test split)
+Samples evaluated  : 20
+
+ROUGE Scores (F1)
+-----------------
+  ROUGE-1          : 0.3403
+  ROUGE-2          : 0.1154
+  ROUGE-L          : 0.2000
+
+Generation Stats
+----------------
+  Avg summary len  : 148.1 tokens
+  Avg time / doc   : 16.31s
+  Total time       : 326.2s

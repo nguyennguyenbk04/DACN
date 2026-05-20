@@ -1,0 +1,53 @@
+\section{Summarization Model}
+
+In this section, we evaluate an abstractive summarization model built on the Longformer Encoder-Decoder (LED) architecture. Unlike conventional transformer models that are constrained to 512 or 1024 tokens, LED replaces the standard transformer encoder with a Longformer encoder that uses a combination of sliding-window local attention and global attention, allowing it to process documents of up to 16,384 tokens. The decoder remains a standard autoregressive transformer, making the overall architecture well-suited for seq2seq summarization of long-form content such as lecture transcripts, medical documents, or research articles.
+
+The model we deploy is pre-trained on long-document summarization tasks. Its architecture is initialized from BART-base and extended with the Longformer attention mechanism, giving it approximately 162 million parameters. This architecture gives LED a significantly larger effective context window than standard encoder-decoder models without incurring quadratic memory cost.
+
+\subsection{Dataset}
+
+To understand how the model behaves across different document types, we evaluate it on three publicly available datasets of increasing document length.
+
+\textbf{CNN/DailyMail} is a widely used news summarization benchmark containing over 300,000 articles paired with bullet-point highlights. Each article averages around 800 words, making it the shortest of the three and serving as our baseline reference.
+
+\textbf{DialogSum} is a dialogue summarization dataset containing 13,460 real-world conversations annotated with human-written summaries. Since the dialogues use speaker-label formatting (e.g., \texttt{\#Person1\#:}), we preprocess each sample by stripping these labels before inference, allowing the model to focus on content rather than format artifacts. Average document length is approximately 150 words.
+
+\textbf{PubMed} is a biomedical summarization dataset derived from PubMed research papers, where the abstract serves as the reference summary. Each article averages around 3,100 words, making it the most representative benchmark for long-document summarization — and the closest in structure to educational lecture transcripts.
+
+\subsection{Evaluation Metrics}
+
+We evaluate summarization quality using the ROUGE family of metrics, which measure n-gram overlap between the generated summary and the reference.
+
+ROUGE-1 and ROUGE-2 measure unigram and bigram overlap respectively, capturing how well the model reproduces key words and short phrases from the reference:
+\[
+\text{ROUGE-N} = \frac{\sum_{\text{gram}_n \in \text{Reference}} \text{Count}_{\text{match}}(\text{gram}_n)}{\sum_{\text{gram}_n \in \text{Reference}} \text{Count}(\text{gram}_n)}
+\]
+
+ROUGE-L measures the longest common subsequence between the generated and reference summary, reflecting sentence-level structure and fluency rather than exact n-gram matches. All scores are reported as F1 values, balancing precision and recall.
+
+\subsection{Results and Discussion}
+
+Table~\ref{tab:sum_results} presents the ROUGE F1 scores across all three datasets.
+
+\begin{table}[h!]
+\centering
+\caption{Summarization ROUGE F1 Scores by Dataset}
+\label{tab:sum_results}
+\begin{tabular}{|l|c|c|c|c|}
+\hline
+\textbf{Dataset} & \textbf{Avg. Doc Length} & \textbf{ROUGE-1} & \textbf{ROUGE-2} & \textbf{ROUGE-L} \\
+\hline
+CNN/DailyMail & $\sim$800 words  & 0.2771 & 0.0993 & 0.1768 \\
+\hline
+DialogSum     & $\sim$150 words  & 0.1907 & 0.0475 & 0.1330 \\
+\hline
+PubMed        & $\sim$3,100 words & 0.3403 & 0.1154 & 0.2000 \\
+\hline
+\end{tabular}
+\end{table}
+
+The results reveal a clear pattern: the model performs best on longer, well-structured documents. On PubMed, it achieves a ROUGE-1 of 0.3403 and ROUGE-2 of 0.1154, which is competitive for a zero-shot evaluation on biomedical text. On CNN/DailyMail, performance is moderate, as the model tends to generate longer, more discursive summaries rather than the short bullet-style highlights that the dataset expects.
+
+DialogSum yields the lowest scores, but this does not reflect poor output quality. Rather, the model generates genuinely abstractive summaries — paraphrasing the conversation rather than reproducing surface phrases — which reduces n-gram overlap with the reference despite producing semantically accurate results.
+
+Average inference time on CPU is approximately 16 seconds per PubMed article and 5 seconds per CNN/DailyMail article, which is acceptable for an on-demand summarization endpoint. For the typical lecture transcript in our system (10–30 minutes of speech, roughly 1,500–4,000 words), the model falls well within its effective context window and produces coherent, abstractive summaries without requiring any additional fine-tuning.

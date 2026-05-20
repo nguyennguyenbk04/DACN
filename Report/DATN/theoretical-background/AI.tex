@@ -1,0 +1,39 @@
+\section{AI and NLP}
+
+\textit{Quizum} integrates three NLP models that together form its core AI pipeline: a speech recognition model for transcription, a long-document summarization model, and a two-stage question generation pipeline for MCQ construction. Whisper handles the transcription stage, converting lecture audio into raw text. The transcribed text then passes through the summarization model to produce a concise abstract, and through the MCQ pipeline to generate structured multiple-choice questions.
+
+\subsection{Summarization: Longformer Encoder-Decoder}
+
+Standard transformer models impose a hard limit of 512 or 1024 input tokens due to the quadratic memory cost of full self-attention. For lecture transcripts and long-form documents this constraint is prohibitive. The Longformer Encoder-Decoder (LED) architecture solves this by replacing the encoder's full self-attention with a combination of sliding-window local attention and global attention, reducing the memory complexity from $\mathcal{O}(n^2)$ to $\mathcal{O}(n \cdot w)$ where $w$ is the window size. The decoder remains a standard autoregressive transformer, giving the overall architecture a seq2seq structure suitable for abstractive summarization.
+
+The attention mechanism works as follows. Every token attends to its $w/2$ neighbors on each side via local attention, capturing local syntactic and semantic structure. A small set of designated tokens — typically the first token — receive global attention, meaning they attend to all other tokens and are attended by all other tokens. This global token aggregates document-level context and conditions the decoder generation.
+
+The LED model used in \textit{Quizum} is initialized from the BART-base architecture and fine-tuned on long-document summarization tasks, giving it approximately 162 million parameters. It accepts inputs of up to 16,384 tokens, which comfortably covers lecture transcripts of 10 to 30 minutes of continuous speech. During inference, the first input token is assigned global attention to provide a document-level anchor, and the decoder generates the summary autoregressively using beam search.
+
+\subsection{MCQ Generation: Two-Stage Fine-Tuned Pipeline}
+
+Generating a multiple-choice question from a passage requires two distinct operations: formulating a question that targets a specific answer span, and producing three plausible distractors that are topically relevant but factually incorrect. A single model cannot reliably do both, so the pipeline separates them into two stages, each served by a dedicated sequence-to-sequence model fine-tuned for its specific task.
+
+\subsubsection{Stage 1 — Question Generation}
+
+The first model takes a context passage as input and generates a question–answer pair. It is a transformer encoder-decoder model fine-tuned on a reading comprehension dataset in which each example pairs a passage with a crowd-sourced factoid question and an extracted answer span. During fine-tuning, the model learns the mapping from passage context to question text conditioned on the answer. The input–output format is:
+
+\begin{center}
+\texttt{[context passage]} $\;\longrightarrow\;$ \texttt{[question] \textless sep\textgreater\ [answer]}
+\end{center}
+
+Fine-tuning uses a standard cross-entropy loss over the decoder's output token sequence. The model is trained to minimize the negative log-likelihood of the reference question tokens given the encoder's representation of the context. After fine-tuning, the model can generate a grammatically coherent, factually grounded question for any passage it receives.
+
+\subsubsection{Stage 2 — Distractor Generation}
+
+The second model takes the answer, the generated question, and the original context as a combined input and produces three distractor options. It is fine-tuned on a multiple-choice examination dataset where each example provides a passage, a question, the correct answer, and three human-authored distractors. The training input is formatted as a concatenation of the three fields separated by a special separator token:
+
+\begin{center}
+\texttt{[answer] \textless sep\textgreater\ [question] \textless sep\textgreater\ [context]} $\;\longrightarrow\;$ \texttt{[distractor 1, distractor 2, distractor 3]}
+\end{center}
+
+The model learns to generate distractors that are plausible within the topic domain but do not match the correct answer. The separator token is added to the tokenizer vocabulary and the token embedding matrix is resized accordingly before fine-tuning begins. Cross-entropy loss over the full output sequence trains the model to reproduce all three distractors in a single decoding pass.
+
+\subsubsection{Fallback: Word-Embedding Retrieval}
+
+When the distractor model produces fewer than three distinct options — which occurs most often for short numeric or proper-noun answers — the pipeline falls back to a word-embedding model. This model was trained on large-scale conversational text and encodes words in a high-dimensional vector space where semantic proximity corresponds to distributional similarity. Given the correct answer, the system retrieves the nearest neighbors in this space that are lexically distinct from the answer and from each other, using them as additional distractor candidates until three options are available.

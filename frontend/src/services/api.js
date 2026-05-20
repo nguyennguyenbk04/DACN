@@ -35,6 +35,9 @@ export const api = {
     }).then(r => r.data);
   },
 
+  startTranscription: (jobId, whisperModel = 'base') =>
+    apiClient.post(`/jobs/${jobId}/transcribe`, { whisperModel }).then(r => r.data),
+
   // ── Jobs ──────────────────────────────────────────────────────────────────
   getJobs:   (page = 1, limit = 10) => apiClient.get('/jobs', { params: { page, limit } }).then(r => r.data),
   getJob:    (jobId)  => apiClient.get(`/jobs/${jobId}`).then(r => r.data),
@@ -46,12 +49,13 @@ export const api = {
   // ── Summary ───────────────────────────────────────────────────────────────
   generateSummary: (videoId, options = {}) =>
     apiClient.post(`/transcripts/${videoId}/summarize`, options).then(r => r.data),
+
   getSavedSummary: (videoId) =>
     apiClient.get(`/transcripts/${videoId}/summary`).then(r => r.data),
 
   // ── Quiz ──────────────────────────────────────────────────────────────────
-  generateMCQ: (videoId, numQuestions = 5) =>
-    apiClient.post(`/transcripts/${videoId}/mcq`, { numQuestions }).then(r => r.data),
+  generateMCQ: (videoId) =>
+    apiClient.post(`/transcripts/${videoId}/mcq`, {}).then(r => r.data),
   getSavedQuiz: (videoId) =>
     apiClient.get(`/transcripts/${videoId}/quiz`).then(r => r.data),
   submitQuizAttempt: (videoId, answers) =>
@@ -71,4 +75,10 @@ export const api = {
 
   // ── Videos ────────────────────────────────────────────────────────────────
   getVideos: () => apiClient.get('/videos').then(r => r.data),
+
+  // ── Profile ───────────────────────────────────────────────────────────────
+  updateProfile: (data) => apiClient.put('/auth/profile', data).then(r => r.data),
+  deleteAccount: () => apiClient.delete('/auth/profile').then(r => r.data),
+  getStats: () => apiClient.get('/auth/stats').then(r => r.data),
+  getPerformance: () => apiClient.get('/auth/performance').then(r => r.data),
 };
