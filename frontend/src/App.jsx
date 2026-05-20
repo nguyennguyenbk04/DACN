@@ -13,9 +13,9 @@ export default function App() {
   const { user, logout } = useAuth();
 
   return (
-    <div className="h-screen flex flex-col bg-[#0d0d14] text-[#e8e8f0] overflow-hidden">
+    <div className="h-screen flex flex-col bg-gray-50 text-gray-900 overflow-hidden">
       {/* Header */}
-      <header className="flex-shrink-0 flex items-center justify-between px-5 h-14 bg-[#13131f] border-b border-[#2a2a3e] z-20">
+      <header className="flex-shrink-0 flex items-center justify-between px-5 h-14 bg-white border-b border-gray-200 z-20">
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg">
             <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
@@ -28,28 +28,28 @@ export default function App() {
         <div className="relative">
           <button
             onClick={() => setShowUserMenu(v => !v)}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-[#1a1a2e] transition"
+            className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-gray-100 transition"
           >
             <div className="w-7 h-7 rounded-full bg-indigo-600 flex items-center justify-center text-xs font-bold">
               {(user?.name || user?.email || 'U')[0].toUpperCase()}
             </div>
-            <span className="text-sm text-[#8888a8] hidden sm:block">{user?.email}</span>
+            <span className="text-sm text-gray-500 hidden sm:block">{user?.email}</span>
           </button>
           {showUserMenu && (
-            <div className="absolute right-0 top-11 bg-[#1a1a2e] border border-[#2a2a3e] rounded-xl shadow-2xl py-1 min-w-[200px] z-50">
-              <div className="px-4 py-3 border-b border-[#2a2a3e]">
+            <div className="absolute right-0 top-11 bg-gray-100 border border-gray-200 rounded-xl shadow-2xl py-1 min-w-[200px] z-50">
+              <div className="px-4 py-3 border-b border-gray-200">
                 <p className="text-sm font-semibold">{user?.name || 'User'}</p>
-                <p className="text-xs text-[#8888a8] mt-0.5">{user?.email}</p>
+                <p className="text-xs text-gray-500 mt-0.5">{user?.email}</p>
               </div>
               <button
                 onClick={() => { setShowProfile(true); setShowUserMenu(false); }}
-                className="w-full text-left px-4 py-2.5 text-sm text-[#e8e8f0] hover:bg-[#2a2a3e] transition"
+                className="w-full text-left px-4 py-2.5 text-sm text-gray-900 hover:bg-gray-200 transition"
               >
                 Profile & Stats
               </button>
               <button
                 onClick={() => { logout(); setShowUserMenu(false); }}
-                className="w-full text-left px-4 py-2.5 text-sm text-red-400 hover:bg-[#2a2a3e] transition"
+                className="w-full text-left px-4 py-2.5 text-sm text-red-400 hover:bg-gray-200 transition"
               >
                 Sign out
               </button>
@@ -63,13 +63,13 @@ export default function App() {
       {/* Body */}
       <div className="flex flex-1 overflow-hidden">
         {/* Left sidebar */}
-        <aside className="w-72 flex-shrink-0 bg-[#13131f] border-r border-[#2a2a3e] flex flex-col overflow-hidden">
-          <div className="p-4 border-b border-[#2a2a3e]">
-            <p className="text-[10px] font-bold text-[#555570] uppercase tracking-widest mb-3">Upload</p>
+        <aside className="w-72 flex-shrink-0 bg-white border-r border-gray-200 flex flex-col overflow-hidden">
+          <div className="p-4 border-b border-gray-200">
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Upload</p>
             <FileUpload onUploadComplete={() => setRefreshTrigger(p => p + 1)} />
           </div>
           <div className="flex-1 overflow-y-auto p-3">
-            <p className="text-[10px] font-bold text-[#555570] uppercase tracking-widest mb-2 px-1">Files</p>
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 px-1">Files</p>
             <JobsList
               refreshTrigger={refreshTrigger}
               selectedJobId={selectedVideoId}
@@ -79,7 +79,7 @@ export default function App() {
         </aside>
 
         {/* Main content */}
-        <main className="flex-1 overflow-hidden bg-[#0d0d14]">
+        <main className="flex-1 overflow-hidden bg-gray-50">
           {selectedVideoId ? (
             <TranscriptViewer
               videoId={selectedVideoId}
@@ -87,14 +87,14 @@ export default function App() {
             />
           ) : (
             <div className="h-full flex flex-col items-center justify-center gap-4 text-center px-12">
-              <div className="w-20 h-20 rounded-2xl bg-[#1a1a2e] border border-[#2a2a3e] flex items-center justify-center">
-                <svg className="w-9 h-9 text-[#555570]" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+              <div className="w-20 h-20 rounded-2xl bg-gray-100 border border-gray-200 flex items-center justify-center">
+                <svg className="w-9 h-9 text-gray-400" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25z" />
                 </svg>
               </div>
               <div>
-                <p className="text-[#e8e8f0] font-medium mb-1">No file selected</p>
-                <p className="text-sm text-[#555570]">Upload a video or audio file, then select it from the sidebar to view its transcript, summary, and quiz.</p>
+                <p className="text-gray-900 font-medium mb-1">No file selected</p>
+                <p className="text-sm text-gray-400">Upload a video or audio file, then select it from the sidebar to view its transcript, summary, and quiz.</p>
               </div>
             </div>
           )}

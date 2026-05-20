@@ -113,7 +113,7 @@ const VideoPlayer = forwardRef(function VideoPlayer({ videoUrl, youtubeUrl, segm
       </div>
 
       {/* Controls */}
-      <div className="bg-[#13131f] px-4 py-3 space-y-2">
+      <div className="bg-white px-4 py-3 space-y-2">
         <input
           type="range" min="0" max={duration || 0} value={currentTime}
           onChange={handleSeek}
@@ -137,7 +137,7 @@ const VideoPlayer = forwardRef(function VideoPlayer({ videoUrl, youtubeUrl, segm
               </svg>
             )}
           </button>
-          <span className="text-xs font-mono text-[#8888a8]">
+          <span className="text-xs font-mono text-gray-500">
             {formatTime(currentTime)} / {formatTime(duration)}
           </span>
         </div>

@@ -216,8 +216,8 @@ router.post('/transcripts/:videoId/summarize', async (req, res) => {
     const modelKey   = req.body?.model || 'led';
     const { max, min } = LENGTH_MAP[lengthKey];
 
-    console.log(`Summarizing job ${req.params.videoId} (length=${lengthKey})…`);
-    const summary = await summarize(transcript.fullText, { length: lengthKey, maxLen: max, minLen: min });
+    console.log(`Summarizing job ${req.params.videoId} (length=${lengthKey}, model=${modelKey})…`);
+    const summary = await summarize(transcript.fullText, { length: lengthKey, model: modelKey, maxLen: max, minLen: min });
 
     await mysql.execute(
       'DELETE FROM summaries WHERE job_id = ? AND length = ?',

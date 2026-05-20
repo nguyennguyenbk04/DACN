@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { api } from '../services/api';
 
 const STATUS = {
-  ready:     { label: 'Ready',   cls: 'bg-[#2a2a3e] text-[#8888a8]' },
+  ready:     { label: 'Ready',   cls: 'bg-gray-200 text-gray-500' },
   queued:    { label: 'Queued',  cls: 'bg-indigo-900/40 text-indigo-400' },
   running:   { label: 'Running', cls: 'bg-blue-900/50 text-blue-400' },
   completed: { label: 'Done',    cls: 'bg-emerald-900/40 text-emerald-400' },
@@ -41,7 +41,7 @@ export default function JobsList({ refreshTrigger, selectedJobId, onSelectJob })
   }
 
   if (jobs.length === 0) {
-    return <p className="text-xs text-[#555570] px-1 py-6 text-center">No files yet</p>;
+    return <p className="text-xs text-gray-400 px-1 py-6 text-center">No files yet</p>;
   }
 
   return (
@@ -59,7 +59,7 @@ export default function JobsList({ refreshTrigger, selectedJobId, onSelectJob })
               isSelected
                 ? 'bg-indigo-600/20 border-indigo-600/40'
                 : isClickable
-                  ? 'hover:bg-[#1a1a2e] cursor-pointer border-transparent'
+                  ? 'hover:bg-gray-100 cursor-pointer border-transparent'
                   : 'border-transparent opacity-50'
             }`}
           >
@@ -72,8 +72,8 @@ export default function JobsList({ refreshTrigger, selectedJobId, onSelectJob })
 
             {/* File info */}
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-medium text-[#e8e8f0] truncate">{job.filename || 'Unnamed'}</p>
-              <p className="text-[10px] text-[#555570] mt-0.5">{new Date(job.created_at).toLocaleDateString()}</p>
+              <p className="text-xs font-medium text-gray-900 truncate">{job.filename || 'Unnamed'}</p>
+              <p className="text-[10px] text-gray-400 mt-0.5">{new Date(job.created_at).toLocaleDateString()}</p>
             </div>
 
             {/* Status badge */}
@@ -85,7 +85,7 @@ export default function JobsList({ refreshTrigger, selectedJobId, onSelectJob })
             <button
               onClick={e => handleDelete(e, job.job_id)}
               disabled={deleting === job.job_id}
-              className="p-1 rounded opacity-0 group-hover:opacity-100 hover:bg-[#2a2a3e] text-[#555570] hover:text-red-400 transition flex-shrink-0 disabled:opacity-40"
+              className="p-1 rounded opacity-0 group-hover:opacity-100 hover:bg-gray-200 text-gray-400 hover:text-red-400 transition flex-shrink-0 disabled:opacity-40"
             >
               {deleting === job.job_id ? (
                 <div className="w-3 h-3 border-2 border-red-400 border-t-transparent rounded-full animate-spin" />

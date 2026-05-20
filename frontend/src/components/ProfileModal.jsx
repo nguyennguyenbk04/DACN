@@ -6,10 +6,10 @@ const TABS = ['Profile', 'Stats', 'Performance'];
 
 function StatCard({ label, value, sub }) {
   return (
-    <div className="bg-[#1a1a2e] border border-[#2a2a3e] rounded-xl p-4 flex flex-col gap-1">
-      <p className="text-[10px] font-bold text-[#555570] uppercase tracking-widest">{label}</p>
-      <p className="text-2xl font-bold text-[#e8e8f0]">{value ?? '—'}</p>
-      {sub && <p className="text-xs text-[#555570]">{sub}</p>}
+    <div className="bg-gray-100 border border-gray-200 rounded-xl p-4 flex flex-col gap-1">
+      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{label}</p>
+      <p className="text-2xl font-bold text-gray-900">{value ?? '—'}</p>
+      {sub && <p className="text-xs text-gray-400">{sub}</p>}
     </div>
   );
 }
@@ -31,11 +31,11 @@ function ActivityGrid({ uploadActivity, quizActivity }) {
 
   return (
     <div>
-      <p className="text-[10px] font-bold text-[#555570] uppercase tracking-widest mb-2">Activity — last 30 days</p>
+      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Activity — last 30 days</p>
       <div className="flex gap-1 flex-wrap">
         {cells.map(c => {
           const total = c.uploads + c.quizzes;
-          const bg = total === 0 ? 'bg-[#1a1a2e]'
+          const bg = total === 0 ? 'bg-gray-100'
             : total <= 1 ? 'bg-indigo-900'
             : total <= 3 ? 'bg-indigo-700'
             : 'bg-indigo-500';
@@ -49,11 +49,11 @@ function ActivityGrid({ uploadActivity, quizActivity }) {
         })}
       </div>
       <div className="flex gap-3 mt-2">
-        <span className="text-[10px] text-[#555570]">Less</span>
-        {['bg-[#1a1a2e]', 'bg-indigo-900', 'bg-indigo-700', 'bg-indigo-500'].map(c => (
+        <span className="text-[10px] text-gray-400">Less</span>
+        {['bg-gray-100', 'bg-indigo-900', 'bg-indigo-700', 'bg-indigo-500'].map(c => (
           <span key={c} className={`w-3 h-3 rounded-sm ${c} inline-block`} />
         ))}
-        <span className="text-[10px] text-[#555570]">More</span>
+        <span className="text-[10px] text-gray-400">More</span>
       </div>
     </div>
   );
@@ -125,21 +125,21 @@ export default function ProfileModal({ onClose }) {
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4" onClick={onClose}>
       <div
-        className="bg-[#13131f] border border-[#2a2a3e] rounded-2xl shadow-2xl w-full max-w-lg max-h-[85vh] flex flex-col"
+        className="bg-white border border-gray-200 rounded-2xl shadow-2xl w-full max-w-lg max-h-[85vh] flex flex-col"
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-[#2a2a3e] flex-shrink-0">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200 flex-shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-full bg-indigo-600 flex items-center justify-center text-sm font-bold">
               {(user?.name || user?.email || 'U')[0].toUpperCase()}
             </div>
             <div>
-              <p className="text-sm font-semibold text-[#e8e8f0]">{user?.name || 'User'}</p>
-              <p className="text-xs text-[#555570]">{user?.email}</p>
+              <p className="text-sm font-semibold text-gray-900">{user?.name || 'User'}</p>
+              <p className="text-xs text-gray-400">{user?.email}</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-[#2a2a3e] text-[#555570] hover:text-[#e8e8f0] transition">
+          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-gray-200 text-gray-400 hover:text-gray-900 transition">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -147,13 +147,13 @@ export default function ProfileModal({ onClose }) {
         </div>
 
         {/* Tabs */}
-        <div className="flex border-b border-[#2a2a3e] flex-shrink-0">
+        <div className="flex border-b border-gray-200 flex-shrink-0">
           {TABS.map(t => (
             <button
               key={t}
               onClick={() => setTab(t)}
               className={`px-4 py-2.5 text-xs font-semibold transition border-b-2 -mb-px ${
-                tab === t ? 'border-indigo-500 text-indigo-400' : 'border-transparent text-[#555570] hover:text-[#8888a8]'
+                tab === t ? 'border-indigo-500 text-indigo-400' : 'border-transparent text-gray-400 hover:text-gray-500'
               }`}
             >
               {t}
@@ -168,30 +168,30 @@ export default function ProfileModal({ onClose }) {
           {tab === 'Profile' && (
             <>
               <div>
-                <label className="block text-xs font-semibold text-[#8888a8] mb-1.5">Display name</label>
+                <label className="block text-xs font-semibold text-gray-500 mb-1.5">Display name</label>
                 <input
                   value={name}
                   onChange={e => setName(e.target.value)}
-                  className="w-full bg-[#0d0d14] border border-[#2a2a3e] rounded-lg px-3 py-2 text-sm text-[#e8e8f0] focus:outline-none focus:border-indigo-500"
+                  className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:border-indigo-500"
                 />
               </div>
 
-              <div className="border-t border-[#2a2a3e] pt-4">
-                <p className="text-xs font-semibold text-[#8888a8] mb-3">Change password</p>
+              <div className="border-t border-gray-200 pt-4">
+                <p className="text-xs font-semibold text-gray-500 mb-3">Change password</p>
                 <div className="space-y-2">
                   <input
                     type="password"
                     placeholder="Current password"
                     value={currentPw}
                     onChange={e => setCurrentPw(e.target.value)}
-                    className="w-full bg-[#0d0d14] border border-[#2a2a3e] rounded-lg px-3 py-2 text-sm text-[#e8e8f0] placeholder-[#555570] focus:outline-none focus:border-indigo-500"
+                    className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-[#555570] focus:outline-none focus:border-indigo-500"
                   />
                   <input
                     type="password"
                     placeholder="New password (min 6 chars)"
                     value={newPw}
                     onChange={e => setNewPw(e.target.value)}
-                    className="w-full bg-[#0d0d14] border border-[#2a2a3e] rounded-lg px-3 py-2 text-sm text-[#e8e8f0] placeholder-[#555570] focus:outline-none focus:border-indigo-500"
+                    className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-[#555570] focus:outline-none focus:border-indigo-500"
                   />
                 </div>
               </div>
@@ -211,9 +211,9 @@ export default function ProfileModal({ onClose }) {
               </button>
 
               {/* Delete account */}
-              <div className="border-t border-[#2a2a3e] pt-4">
-                <p className="text-xs font-semibold text-[#8888a8] mb-1">Danger zone</p>
-                <p className="text-xs text-[#555570] mb-3">Permanently delete your account and all associated data.</p>
+              <div className="border-t border-gray-200 pt-4">
+                <p className="text-xs font-semibold text-gray-500 mb-1">Danger zone</p>
+                <p className="text-xs text-gray-400 mb-3">Permanently delete your account and all associated data.</p>
                 {!confirmDelete ? (
                   <button
                     onClick={() => setConfirmDelete(true)}
@@ -225,7 +225,7 @@ export default function ProfileModal({ onClose }) {
                   <div className="space-y-2">
                     <p className="text-xs text-red-400 font-semibold">Are you sure? This cannot be undone.</p>
                     <div className="flex gap-2">
-                      <button onClick={() => setConfirmDelete(false)} className="flex-1 border border-[#2a2a3e] text-[#8888a8] hover:bg-[#1a1a2e] text-sm py-2 rounded-xl transition">
+                      <button onClick={() => setConfirmDelete(false)} className="flex-1 border border-gray-200 text-gray-500 hover:bg-gray-100 text-sm py-2 rounded-xl transition">
                         Cancel
                       </button>
                       <button onClick={handleDelete} disabled={deleting} className="flex-1 bg-red-700 hover:bg-red-800 disabled:opacity-50 text-white text-sm font-semibold py-2 rounded-xl transition">
@@ -241,7 +241,7 @@ export default function ProfileModal({ onClose }) {
           {/* ── STATS TAB ── */}
           {tab === 'Stats' && (
             statsLoading ? (
-              <div className="flex items-center justify-center h-40 text-[#555570] text-sm">Loading…</div>
+              <div className="flex items-center justify-center h-40 text-gray-400 text-sm">Loading…</div>
             ) : stats ? (
               <>
                 <div className="grid grid-cols-2 gap-3">
@@ -253,14 +253,14 @@ export default function ProfileModal({ onClose }) {
                 <ActivityGrid uploadActivity={stats.uploadActivity} quizActivity={stats.quizActivity} />
               </>
             ) : (
-              <p className="text-sm text-[#555570] text-center py-10">No data yet.</p>
+              <p className="text-sm text-gray-400 text-center py-10">No data yet.</p>
             )
           )}
 
           {/* ── PERFORMANCE TAB ── */}
           {tab === 'Performance' && (
             perfLoading ? (
-              <div className="flex items-center justify-center h-40 text-[#555570] text-sm">Loading…</div>
+              <div className="flex items-center justify-center h-40 text-gray-400 text-sm">Loading…</div>
             ) : perf && perf.length > 0 ? (
               <>
                 {perf.filter(v => Number(v.avgScore) < 60).length > 0 && (
@@ -279,27 +279,27 @@ export default function ProfileModal({ onClose }) {
                     const score = Number(v.avgScore);
                     const pct = Math.min(score, 100);
                     return (
-                      <div key={v.jobId} className="bg-[#1a1a2e] border border-[#2a2a3e] rounded-xl p-3">
+                      <div key={v.jobId} className="bg-gray-100 border border-gray-200 rounded-xl p-3">
                         <div className="flex items-center justify-between mb-1.5">
-                          <p className="text-xs font-medium text-[#e8e8f0] truncate flex-1 mr-2">{v.filename}</p>
+                          <p className="text-xs font-medium text-gray-900 truncate flex-1 mr-2">{v.filename}</p>
                           <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${scoreBg(score)} ${scoreColor(score)}`}>
                             {score}%
                           </span>
                         </div>
-                        <div className="w-full bg-[#0d0d14] rounded-full h-1.5">
+                        <div className="w-full bg-gray-50 rounded-full h-1.5">
                           <div
                             className={`h-1.5 rounded-full transition-all ${score >= 80 ? 'bg-emerald-500' : score >= 60 ? 'bg-yellow-500' : 'bg-red-500'}`}
                             style={{ width: `${pct}%` }}
                           />
                         </div>
-                        <p className="text-[10px] text-[#555570] mt-1">{v.attempts} attempt{v.attempts !== 1 ? 's' : ''} · best {v.bestScore}%</p>
+                        <p className="text-[10px] text-gray-400 mt-1">{v.attempts} attempt{v.attempts !== 1 ? 's' : ''} · best {v.bestScore}%</p>
                       </div>
                     );
                   })}
                 </div>
               </>
             ) : (
-              <p className="text-sm text-[#555570] text-center py-10">Take some quizzes to see your performance here.</p>
+              <p className="text-sm text-gray-400 text-center py-10">Take some quizzes to see your performance here.</p>
             )
           )}
 

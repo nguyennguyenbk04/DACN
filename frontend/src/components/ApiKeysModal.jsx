@@ -51,16 +51,16 @@ export default function ApiKeysModal({ onClose }) {
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4" onClick={onClose}>
       <div
-        className="bg-[#13131f] border border-[#2a2a3e] rounded-2xl shadow-2xl w-full max-w-md"
+        className="bg-white border border-gray-200 rounded-2xl shadow-2xl w-full max-w-md"
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-[#2a2a3e]">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200">
           <div>
-            <p className="text-sm font-semibold text-[#e8e8f0]">API Keys</p>
-            <p className="text-xs text-[#555570] mt-0.5">Keys are saved in your browser only — never sent to our servers.</p>
+            <p className="text-sm font-semibold text-gray-900">API Keys</p>
+            <p className="text-xs text-gray-400 mt-0.5">Keys are saved in your browser only — never sent to our servers.</p>
           </div>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-[#2a2a3e] text-[#555570] hover:text-[#e8e8f0] transition">
+          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-gray-200 text-gray-400 hover:text-gray-900 transition">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -76,8 +76,8 @@ export default function ApiKeysModal({ onClose }) {
                 <div className="flex items-center justify-between mb-1.5">
                   <div className="flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: hasKey ? p.color : '#555570' }} />
-                    <span className="text-xs font-semibold text-[#e8e8f0]">{p.label}</span>
-                    <span className="text-[10px] text-[#555570]">{p.models}</span>
+                    <span className="text-xs font-semibold text-gray-900">{p.label}</span>
+                    <span className="text-[10px] text-gray-400">{p.models}</span>
                   </div>
                   <a
                     href={p.url}
@@ -95,11 +95,11 @@ export default function ApiKeysModal({ onClose }) {
                     value={values[p.key] || ''}
                     onChange={e => setValues(v => ({ ...v, [p.key]: e.target.value }))}
                     placeholder={p.placeholder}
-                    className="w-full bg-[#0d0d14] border border-[#2a2a3e] rounded-lg px-3 py-2 pr-10 text-xs text-[#e8e8f0] placeholder-[#555570] focus:outline-none focus:border-indigo-500 font-mono"
+                    className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 pr-10 text-xs text-gray-900 placeholder-[#555570] focus:outline-none focus:border-indigo-500 font-mono"
                   />
                   <button
                     onClick={() => setVisible(v => ({ ...v, [p.key]: !v[p.key] }))}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#555570] hover:text-[#8888a8] transition"
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-500 transition"
                     tabIndex={-1}
                   >
                     {visible[p.key] ? (
